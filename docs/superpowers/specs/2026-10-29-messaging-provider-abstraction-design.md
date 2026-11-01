@@ -8,7 +8,7 @@ connections. Households use those connections without managing bot credentials.
 
 ## Decision
 
-Keep Food Manager's pantry, recipes, household permissions, localization, and
+Keep Pantry Manager's pantry, recipes, household permissions, localization, and
 quota services independent of the messaging platform. Introduce a typed
 application boundary and adapters for Telegram, Slack, and WhatsApp Cloud API.
 Several connections can run simultaneously. Replies use the originating
@@ -370,7 +370,7 @@ a complete Slack command/action integration.
 
 WhatsApp setup cannot honestly be reduced to pasting a personal WhatsApp number.
 Meta account eligibility, sender onboarding and template approval happen outside
-Food Manager. Embedded Signup can be a future improvement after the deployment's
+Pantry Manager. Embedded Signup can be a future improvement after the deployment's
 Meta app prerequisites are established; it is not a prerequisite for this rollout.
 No unofficial WhatsApp Web session automation is included.
 

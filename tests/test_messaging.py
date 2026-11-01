@@ -460,6 +460,15 @@ async def test_admin_auth_csrf_write_only_credentials_and_revision(state):
             "Cookie": f"fm_connections={cookie.value}",
             "Origin": "https://food.example",
         }
+        page = await client.get("/admin/connections")
+        assert "Pantry Manager" in await page.text()
+        instructions = await client.get(
+            "/admin/api/connections/s/instructions", headers=headers
+        )
+        assert instructions.status == 200
+        manifest = (await instructions.json())["manifest"]
+        assert manifest["display_information"]["name"] == "Pantry Manager"
+        assert manifest["features"]["bot_user"]["display_name"] == "Pantry Manager"
         value = {
             "provider": "telegram",
             "label": "Kitchen",
