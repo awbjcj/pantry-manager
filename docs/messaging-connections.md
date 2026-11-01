@@ -11,7 +11,7 @@ still apply.
 Run one application process against one persistent SQLite volume. Set:
 
 ```dotenv
-PUBLIC_BASE_URL=https://your-food-manager.example
+PUBLIC_BASE_URL=https://your-pantry-manager.example
 CONNECTION_ADMIN_TOKEN=<random-owner-token-at-least-32-characters>
 CONNECTION_SECRET_KEY=<Fernet-key>
 DATABASE_PATH=/data/food.db
@@ -37,7 +37,7 @@ before using food workflows. `ALLOWED_TELEGRAM_USER_ID=0` is appropriate when
 Telegram environment credentials are absent. With an environment Telegram bot
 in private mode, set its real owner user ID.
 
-Open `https://your-food-manager.example/admin/connections`, sign in with the
+Open `https://your-pantry-manager.example/admin/connections`, sign in with the
 owner token, and create a connection. The console uses a secure HttpOnly cookie,
 CSRF protection, revision checks, write-only encrypted credentials, and bounded
 login/test attempts. The operator console is currently in English; bot workflows
