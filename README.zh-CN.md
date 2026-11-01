@@ -1,10 +1,10 @@
-# food-manager
+# Pantry Manager
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-[![CI/CD](https://github.com/awbjcj/food-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/awbjcj/food-manager/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/github/v/tag/awbjcj/food-manager?sort=semver&label=version)](https://github.com/awbjcj/food-manager/tags)
-[![Release](https://img.shields.io/github/v/release/awbjcj/food-manager?label=release)](https://github.com/awbjcj/food-manager/releases)
+[![CI/CD](https://github.com/awbjcj/pantry-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/awbjcj/pantry-manager/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/github/v/tag/awbjcj/pantry-manager?sort=semver&label=version)](https://github.com/awbjcj/pantry-manager/tags)
+[![Release](https://img.shields.io/github/v/release/awbjcj/pantry-manager?label=release)](https://github.com/awbjcj/pantry-manager/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 一个 Telegram 机器人和 Mini App，用于跟踪家庭食品库、将购物小票转换为结构化条目、规划膳食，并在食物过期前提醒所有家庭成员。支持 Anthropic、OpenAI、Gemini 和 DeepSeek，共享家庭、Telegram Stars 订阅，以及英语、中文、法语和西班牙语。
@@ -15,7 +15,7 @@
 
 在线服务地址：[@foodie_manager_bot](https://t.me/foodie_manager_bot)。无需运行服务器，即可体验小票扫描、家庭共享食品库、膳食计划、临期提醒和 Telegram Mini App。你可以先使用免费套餐；需要更多收据导入次数、AI 操作次数或家庭成员席位时，再邀请家庭成员或使用 Telegram Stars 升级。
 
-托管 Mini App 运行在 [food-manager-production.up.railway.app](https://food-manager-production.up.railway.app)，但账户访问由 Telegram 验证。请通过机器人中的**打开应用**按钮进入。可参阅[托管服务指南](docs/hosted-service.zh-CN.md)，其中包含快速上手步骤和可直接分享的推广文案。
+托管 Mini App 运行在 [pantry-manager-production.up.railway.app](https://pantry-manager-production.up.railway.app)，但账户访问由 Telegram 验证。请通过机器人中的**打开应用**按钮进入。可参阅[托管服务指南](docs/hosted-service.zh-CN.md)，其中包含快速上手步骤和可直接分享的推广文案。
 
 ## 工作原理
 
@@ -53,7 +53,7 @@ docker compose up --build -d
 
 # 3. 检查就绪状态并查看启动日志。
 docker compose ps
-docker compose logs -f food-manager
+docker compose logs -f pantry-manager
 ```
 
 打开 <http://localhost:8000/healthz>，预期响应为 `{"ok": true}`。然后使用 `ALLOWED_TELEGRAM_USER_ID` 对应的 Telegram 账户向机器人发送 `/start`。命名 Docker 卷会在重启之间保留 SQLite 数据库。
@@ -106,7 +106,7 @@ uv run pytest tests/test_core_services.py::test_shelf_life_defaults
 
 ## 部署到 Railway
 
-1. 在 Railway 中创建或导入项目，然后把服务源连接到 `awbjcj/food-manager` 仓库的 `master` 分支，并启用自动部署。
+1. 在 Railway 中创建或导入项目，然后把服务源连接到 `awbjcj/pantry-manager` 仓库的 `master` 分支，并启用自动部署。
 2. 添加名为 `food-data` 的持久卷，并挂载到 `/data`。
 3. 设置与 `.env.example` 对应的 Railway 服务变量。
 4. 推送或合并到 `master`。Railway 会自动构建并部署新版本；GitHub Actions 会独立运行 CI 质量门禁。

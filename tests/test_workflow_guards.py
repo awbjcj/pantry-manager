@@ -34,18 +34,18 @@ def workflow(name):
 
 
 @pytest.mark.parametrize(("branch", "repository", "allowed"), [
-    ("dev", "awbjcj/food-manager", True),
-    ("hotfix/repair", "awbjcj/food-manager", True),
-    ("feature/new", "awbjcj/food-manager", False),
-    ("dev", "fork/food-manager", False),
-    ("hotfix/repair", "fork/food-manager", False),
+    ("dev", "awbjcj/pantry-manager", True),
+    ("hotfix/repair", "awbjcj/pantry-manager", True),
+    ("feature/new", "awbjcj/pantry-manager", False),
+    ("dev", "fork/pantry-manager", False),
+    ("hotfix/repair", "fork/pantry-manager", False),
     ("dev", "", False),
 ])
 def test_merge_source_policy_binds_the_branch_to_its_repository(bash, branch, repository, allowed):
     step = workflow("guard-main-merge.yml")["jobs"]["check-source-branch"]["steps"][0]
     result = subprocess.run([bash, "-c", step["run"]], capture_output=True, text=True, check=False,
         env={**os.environ, "HEAD_REF": branch, "HEAD_REPOSITORY": repository,
-             "BASE_REPOSITORY": "awbjcj/food-manager"})
+             "BASE_REPOSITORY": "awbjcj/pantry-manager"})
     assert (result.returncode == 0) == allowed, result.stdout + result.stderr
 
 

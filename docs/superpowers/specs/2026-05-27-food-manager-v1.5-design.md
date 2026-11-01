@@ -1,4 +1,4 @@
-# Food Manager v1.5 — Design Spec
+# Pantry Manager v1.5 — Design Spec
 
 **Date:** 2026-05-27
 **Author:** awbjcj@gmail.com (with Claude, grilling)

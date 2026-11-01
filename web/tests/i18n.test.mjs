@@ -41,3 +41,10 @@ test('regional Telegram locales resolve before rendering and placeholders interp
   }
   assert.equal(t('fr', 'usage.usedOf', { used: 3, limit: 20 }), '3 sur 20 utilisés')
 })
+
+test('the renamed product appears in every supported language', () => {
+  for (const locale of supportedLocales) {
+    assert.equal(t(locale, 'brand.name'), 'Pantry Manager')
+    assert.match(t(locale, 'error.openInTelegram.title'), /Pantry Manager/)
+  }
+})

@@ -1,19 +1,19 @@
 ---
-repo_url: https://github.com/awbjcj/food-manager
-repo_name: food-manager
+repo_url: https://github.com/awbjcj/pantry-manager
+repo_name: pantry-manager
 role: sole author
 generated_at: 2026-10-02
 source_revision: 548eb0db3389e9918d1e5c9d2216587e261e3d78
 ---
 
-# Project: Food Manager — Shared Pantry and Meal-Planning Assistant
+# Project: Pantry Manager — Shared Pantry and Meal-Planning Assistant
 
 ## Summary
 
 A Telegram bot and Mini App for households tracking groceries, expiry dates, recipes, and meal plans. Receipt photos and natural-language inputs become persisted pantry records through capability-aware model routing. Shared household membership, metered actions, payments, and operator controls surround the domain workflows. Recent implementation gives the Mini App a Kitchen workspace that invokes existing bot handlers and groups pantry items by source receipt. The project is actively implemented by one human author with automation-account commits.
 
 Role: sole author (431 of 447 repository commits across the owner’s Git identities, `git shortlog -sne 548eb0db3389e9918d1e5c9d2216587e261e3d78`; preserved upstream/contributor and automation history is excluded from the owner count)
-Repository: https://github.com/awbjcj/food-manager
+Repository: https://github.com/awbjcj/pantry-manager
 Timeline: 2026-05 – present (`git log --reverse --format=%as`)
 
 ## Tech stack (evidence-backed)

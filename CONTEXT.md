@@ -1,8 +1,8 @@
-# Food Manager
+# Pantry Manager
 
 [English](CONTEXT.md) | [简体中文](CONTEXT.zh-CN.md)
 
-Food Manager tracks groceries from receipt capture through expiry reminders.
+Pantry Manager tracks groceries from receipt capture through expiry reminders.
 
 ## Language
 

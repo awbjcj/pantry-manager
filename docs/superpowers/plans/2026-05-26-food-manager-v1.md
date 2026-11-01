@@ -1,4 +1,4 @@
-# Food Manager v1 Implementation Plan
+# Pantry Manager v1 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -37,7 +37,7 @@ Goal: a uv-managed Python project that boots, runs `pytest`, and has secrets loa
 
 ```toml
 [project]
-name = "food-manager"
+name = "pantry-manager"
 version = "0.1.0"
 description = "Single-user grocery pantry + expiry-reminder Telegram bot"
 requires-python = ">=3.12"
@@ -110,7 +110,7 @@ ENV=dev
 - [ ] **Step 4: Create minimal `README.md`**
 
 ```markdown
-# food-manager
+# pantry-manager
 
 Single-user Telegram bot for grocery pantry tracking and expiry reminders.
 
@@ -5093,7 +5093,7 @@ def _configure_logging(env: str, level: str) -> None:
 
 
 async def _amain(settings: Settings) -> None:
-    log = logging.getLogger("food-manager")
+    log = logging.getLogger("pantry-manager")
     log.info("startup_begin")
 
     # 2. DB.
@@ -5249,7 +5249,7 @@ name = "food-data"
 - [ ] **Step 3: Sanity check Dockerfile parses**
 
 ```bash
-docker build -t food-manager:dev . --no-cache
+docker build -t pantry-manager:dev . --no-cache
 ```
 
 (skip if Docker not available locally — Railway will build on push.)
@@ -5276,7 +5276,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 - [ ] **Step 1: Replace `README.md` with the deploy-ready version**
 
 ```markdown
-# food-manager
+# pantry-manager
 
 Single-user grocery pantry tracker + daily expiry digest as a Telegram bot.
 

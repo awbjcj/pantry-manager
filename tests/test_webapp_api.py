@@ -79,7 +79,7 @@ def web_state(tmp_path, sqlite_db_path):
         payments=payments,
         billing_enabled=True,
         available_providers=("gemini", "openai"),
-        bot_username="food_manager_bot",
+        bot_username="pantry_manager_bot",
         static_dir=Path(tmp_path / "missing-static"),
     )
     try:
@@ -287,7 +287,7 @@ async def test_account_update_validates_persists_and_reschedules(web_state, tmp_
         payments=payments,
         billing_enabled=True,
         available_providers=("gemini", "openai"),
-        bot_username="food_manager_bot",
+        bot_username="pantry_manager_bot",
         static_dir=Path(tmp_path / "missing-static"),
         reschedule=lambda user: rescheduled.append(user.id),
     )

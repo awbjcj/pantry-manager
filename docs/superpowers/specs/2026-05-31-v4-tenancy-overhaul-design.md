@@ -1,4 +1,4 @@
-# Food Manager v4.0 — Tenancy Overhaul (Households, Multi-User & Group Chat)
+# Pantry Manager v4.0 — Tenancy Overhaul (Households, Multi-User & Group Chat)
 
 **Status:** Design approved, ready for implementation planning
 **Date:** 2026-05-31
