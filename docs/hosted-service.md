@@ -1,4 +1,4 @@
-# Food Manager hosted service
+# Pantry Manager hosted service
 
 [English](hosted-service.md) | [简体中文](hosted-service.zh-CN.md)
 
@@ -7,7 +7,7 @@
 Open [@foodie_manager_bot](https://t.me/foodie_manager_bot) in Telegram and tap
 **Start**. No installation is required.
 
-Food Manager turns grocery receipts into a shared smart pantry, reminds your
+Pantry Manager turns grocery receipts into a shared smart pantry, reminds your
 household before food expires, and helps turn what you already own into recipes
 and multi-day meal plans. It works in English, Chinese, French, and Spanish.
 
@@ -41,9 +41,10 @@ and multi-day meal plans. It works in English, Chinese, French, and Spanish.
    the Family plan or a one-time top-up.
 
 The Mini App is hosted at
-[food-manager-production.up.railway.app](https://food-manager-production.up.railway.app).
+[pantry-manager-production.up.railway.app](https://pantry-manager-production.up.railway.app).
 Open it from the bot's **Open app** menu button so Telegram can authenticate
 your account securely.
+The previous Railway address remains available for existing links.
 
 For the Kitchen workspace available in this source version, see the
 [Mini App workflow guide](mini-app.md). Availability on the hosted service depends
@@ -51,14 +52,14 @@ on deploying this version.
 
 ## Share-ready promotional copy
 
-> Waste less food and decide what to cook with less effort. Food Manager turns
+> Waste less food and decide what to cook with less effort. Pantry Manager turns
 > Telegram receipt photos into a shared household pantry, sends expiry
 > reminders, and creates recipes and weekly dinner plans from groceries you
 > already have. Try it free: https://t.me/foodie_manager_bot
 
 Short version:
 
-> Scan receipts. Track expiry dates. Plan dinner. Waste less. Try Food Manager
+> Scan receipts. Track expiry dates. Plan dinner. Waste less. Try Pantry Manager
 > in Telegram: https://t.me/foodie_manager_bot
 
 ## Plans
@@ -72,4 +73,4 @@ purchase and cancellation flow.
 ## Service status
 
 The hosted application runs on Railway. Its public health endpoint is
-<https://food-manager-production.up.railway.app/healthz>.
+<https://pantry-manager-production.up.railway.app/healthz>.

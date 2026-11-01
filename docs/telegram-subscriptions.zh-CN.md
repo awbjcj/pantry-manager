@@ -2,7 +2,7 @@
 
 [English](telegram-subscriptions.md) | [简体中文](telegram-subscriptions.zh-CN.md)
 
-Food Manager 使用 Telegram Stars 支付家庭套餐和一次性额度加量包。账单额度由家庭共享，因此购买后会更新该家庭所有成员的使用上限。
+Pantry Manager 使用 Telegram Stars 支付家庭套餐和一次性额度加量包。账单额度由家庭共享，因此购买后会更新该家庭所有成员的使用上限。
 
 打开在线机器人：[@foodie_manager_bot](https://t.me/foodie_manager_bot)。订阅仅由托管服务提供；本地安装为单用户模式，不显示计费或订阅功能。
 
@@ -39,7 +39,7 @@ Food Manager 使用 Telegram Stars 支付家庭套餐和一次性额度加量包
 
 ## 管理或取消续费
 
-只有家庭所有者可以在 Food Manager 中取消续费：
+只有家庭所有者可以在 Pantry Manager 中取消续费：
 
 1. 打开 Mini App。
 2. 选择**套餐**，然后选择**管理套餐**。

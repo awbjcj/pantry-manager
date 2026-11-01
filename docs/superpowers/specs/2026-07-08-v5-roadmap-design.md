@@ -1,4 +1,4 @@
-# Food Manager v5 Roadmap
+# Pantry Manager v5 Roadmap
 
 **Date:** 2026-07-08
 **Status:** Approved

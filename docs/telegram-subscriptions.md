@@ -2,7 +2,7 @@
 
 [English](telegram-subscriptions.md) | [简体中文](telegram-subscriptions.zh-CN.md)
 
-Food Manager uses Telegram Stars for the Family plan and one-time quota
+Pantry Manager uses Telegram Stars for the Family plan and one-time quota
 top-ups. Billing is pooled by household, so a purchase changes the limits for
 everyone in that household.
 
@@ -48,7 +48,7 @@ at the end of the household's current 30-day quota period.
 
 ## Manage or cancel renewal
 
-Only the household owner can cancel renewal in Food Manager:
+Only the household owner can cancel renewal in Pantry Manager:
 
 1. Open the Mini App.
 2. Select **Plans**, then **Manage plan**.

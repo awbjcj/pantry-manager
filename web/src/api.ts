@@ -28,7 +28,7 @@ export const demoAccount: AccountData = {
     { code: 'topup_actions_150', title: '+150 AI actions', stars: 250, kind: 'topup', receipts: 0, actions: 150, seats: null },
   ],
   availableProviders: ['anthropic', 'deepseek', 'gemini', 'openai'],
-  botUsername: 'food_manager_bot',
+  botUsername: 'pantry_manager_bot',
   billingEnabled: true,
   hostedFeaturesEnabled: true,
 }

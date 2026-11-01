@@ -65,8 +65,8 @@ patch checkpoints cover intervening maintenance.
 Preview the entire historical plan before writing:
 
 ```text
-python bin/release.py backfill --repo awbjcj/food-manager
-python bin/release.py backfill --repo awbjcj/food-manager --apply
+python bin/release.py backfill --repo awbjcj/pantry-manager
+python bin/release.py backfill --repo awbjcj/pantry-manager --apply
 ```
 
 The script validates every target against production ancestry and checks every

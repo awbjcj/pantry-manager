@@ -276,10 +276,10 @@ MESSAGES: dict[str, dict[str, str]] = {
         "es": "eliminado",
     },
     "hosted_only": {
-        "en": "This feature is available on the hosted Food Manager bot: https://t.me/foodie_manager_bot",
-        "zh": "此功能可在托管版 Food Manager 机器人中使用：https://t.me/foodie_manager_bot",
-        "fr": "Cette fonctionnalité est disponible sur le bot Food Manager hébergé : https://t.me/foodie_manager_bot",
-        "es": "Esta función está disponible en el bot alojado Food Manager: https://t.me/foodie_manager_bot",
+        "en": "This feature is available on the hosted Pantry Manager bot: https://t.me/foodie_manager_bot",
+        "zh": "此功能可在托管版 Pantry Manager 机器人中使用：https://t.me/foodie_manager_bot",
+        "fr": "Cette fonctionnalité est disponible sur le bot Pantry Manager hébergé : https://t.me/foodie_manager_bot",
+        "es": "Esta función está disponible en el bot alojado Pantry Manager: https://t.me/foodie_manager_bot",
     },
     "quota.title": {
         "en": "📊 {plan} quota - renews in {days}d",

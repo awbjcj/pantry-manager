@@ -59,7 +59,7 @@ uv run python bin/run.py
 ```text
 docker compose up --build -d
 docker compose ps
-docker compose logs -f food-manager
+docker compose logs -f pantry-manager
 ```
 
 Compose 服务会构建 React Mini App 和 Python 运行环境，公开 <http://localhost:8000>，并把 SQLite 数据保存在名为 `food-data` 的卷中。停止服务但保留数据：
@@ -70,16 +70,24 @@ docker compose down
 
 仅当你明确要删除本地数据库时，才使用 `docker compose down --volumes`。
 
+### 从旧名称升级
+
+Compose 服务已更名。在原 Compose 项目中运行一次
+`docker compose up --build -d --remove-orphans`，以替换旧容器并保留现有
+`food-data` 数据卷。如果检出目录已更改，请将 `COMPOSE_PROJECT_NAME` 设为
+原项目名，以继续使用原数据卷。直接使用 `docker run` 的部署请挂载现有的
+`food-manager-data` 数据卷。
+
 ## 4. 直接构建并运行镜像
 
 ```text
-docker build -t food-manager:local .
-docker volume create food-manager-data
-docker run --name food-manager --env-file .env \
+docker build -t pantry-manager:local .
+docker volume create pantry-manager-data
+docker run --name pantry-manager --env-file .env \
   -e DATABASE_PATH=/data/food.db -e PORT=8000 \
   -e HOSTED_FEATURES_ENABLED=false -e BILLING_ENABLED=false \
   -e OPEN_REGISTRATION=false \
-  -p 8000:8000 -v food-manager-data:/data food-manager:local
+  -p 8000:8000 -v pantry-manager-data:/data pantry-manager:local
 ```
 
 在 PowerShell 中，可将 `docker run` 命令写在一行，或将每行末尾的 `\` 替换为 PowerShell 的反引号续行符。
@@ -91,7 +99,7 @@ docker run --name food-manager --env-file .env \
 1. 在本地 8000 端口启动应用。
 2. 通过 HTTPS 开发隧道公开该端口。
 3. 将 `.env` 中的 `WEB_APP_URL` 设置为隧道的公共 HTTPS 根 URL。
-4. 重启 food-manager。启动时，它会向 Telegram 注册**打开应用**菜单按钮。
+4. 重启 pantry-manager。启动时，它会向 Telegram 注册**打开应用**菜单按钮。
 
 应将隧道 URL 视为公开地址：除非确有需要，否则保持注册关闭，且不要分享该地址。Mini App API 请求会使用 Telegram 初始化数据进行身份验证；直接在普通浏览器中打开 URL 无法访问用户账户。
 

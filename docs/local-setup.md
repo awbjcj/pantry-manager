@@ -75,7 +75,7 @@ Compose plugin on Linux.
 ```text
 docker compose up --build -d
 docker compose ps
-docker compose logs -f food-manager
+docker compose logs -f pantry-manager
 ```
 
 The Compose service builds both the React Mini App and Python runtime, exposes
@@ -89,16 +89,25 @@ docker compose down
 Use `docker compose down --volumes` only when you intentionally want to erase
 the local database.
 
+### Upgrading from the previous name
+
+The Compose service was renamed. In the same Compose project, run
+`docker compose up --build -d --remove-orphans` once to replace its old
+container. Keep the existing `food-data` volume; if the checkout directory
+changed, set `COMPOSE_PROJECT_NAME` to the previous project name so Compose
+continues to use that volume. For a direct `docker run` installation, mount
+the existing `food-manager-data` volume instead of creating a new one.
+
 ## 4. Build and run the image directly
 
 ```text
-docker build -t food-manager:local .
-docker volume create food-manager-data
-docker run --name food-manager --env-file .env \
+docker build -t pantry-manager:local .
+docker volume create pantry-manager-data
+docker run --name pantry-manager --env-file .env \
   -e DATABASE_PATH=/data/food.db -e PORT=8000 \
   -e HOSTED_FEATURES_ENABLED=false -e BILLING_ENABLED=false \
   -e OPEN_REGISTRATION=false \
-  -p 8000:8000 -v food-manager-data:/data food-manager:local
+  -p 8000:8000 -v pantry-manager-data:/data pantry-manager:local
 ```
 
 In PowerShell, either enter the `docker run` command on one line or replace
@@ -112,7 +121,7 @@ URL for a Mini App. To test the real Telegram UI:
 1. Start the app locally on port 8000.
 2. Expose that port through an HTTPS development tunnel.
 3. Set `WEB_APP_URL` in `.env` to the tunnel's public HTTPS root URL.
-4. Restart food-manager. At startup it registers an **Open app** menu button
+4. Restart pantry-manager. At startup it registers an **Open app** menu button
    with Telegram.
 
 Treat a tunnel URL as public: keep registration closed unless needed, and do

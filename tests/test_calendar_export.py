@@ -61,6 +61,7 @@ def test_build_plan_calendar_emits_all_day_event_and_escapes_text():
     payload = build_plan_calendar(plan, [entry])
 
     assert payload.startswith("BEGIN:VCALENDAR\r\n")
+    assert "PRODID:-//Pantry Manager//Meal Plan//EN\r\n" in payload
     assert "DTSTART;VALUE=DATE:20260831\r\n" in payload
     assert "DTEND;VALUE=DATE:20260901\r\n" in payload
     assert "SUMMARY:Pasta\\; Primavera\r\n" in payload

@@ -1,4 +1,4 @@
-# Food Manager v1 — Design Spec
+# Pantry Manager v1 — Design Spec
 
 **Date:** 2026-05-26
 **Author:** awbjcj@gmail.com (with Claude, brainstorming + grilling)
@@ -599,7 +599,7 @@ committed only if sanitized.
 ### 9.1 Layout
 
 ```
-food-manager/
+pantry-manager/
 ├── app/
 │   ├── bot.py
 │   ├── ingest_service.py
@@ -834,7 +834,7 @@ Three layers, cheapest first:
 
 1. **Sender whitelist (per-user):** maintained via `/email_add_sender
    receipts@instacart.com`. Free, deterministic, hits 90 % of real cases.
-2. **Label-based:** user applies a `food-manager-ingest` Gmail label;
+2. **Label-based:** user applies a `pantry-manager-ingest` Gmail label;
    connector processes only labelled threads. Zero ambiguity, requires
    user discipline.
 3. **LLM classifier (fallback, opt-in):** for unrecognized senders, a

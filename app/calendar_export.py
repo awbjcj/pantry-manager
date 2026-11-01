@@ -50,7 +50,7 @@ def build_plan_calendar(
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//Food Manager//Meal Plan//EN",
+        "PRODID:-//Pantry Manager//Meal Plan//EN",
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH",
     ]
@@ -66,6 +66,7 @@ def build_plan_calendar(
         lines.extend(
             [
                 "BEGIN:VEVENT",
+                # Keep legacy event UIDs so calendar imports update existing events.
                 f"UID:meal-plan-{plan.id}-{entry_id}@food-manager",
                 f"DTSTAMP:{_utc_stamp(plan.created_at)}",
                 f"DTSTART;VALUE=DATE:{entry.date:%Y%m%d}",
