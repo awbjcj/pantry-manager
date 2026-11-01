@@ -1,64 +1,72 @@
 ---
 repo_url: https://github.com/awbjcj/pantry-manager
-repo_name: pantry-manager
+repo_name: food-manager
 role: sole author
-generated_at: 2026-10-02
-source_revision: 548eb0db3389e9918d1e5c9d2216587e261e3d78
+generated_at: 2026-10-31
+source_revision: 4b66acf207eb29b5b92ebae7bb42ade7959b1736
 ---
 
-# Project: Pantry Manager — Shared Pantry and Meal-Planning Assistant
+# Project: Pantry Manager
 
 ## Summary
 
-A Telegram bot and Mini App for households tracking groceries, expiry dates, recipes, and meal plans. Receipt photos and natural-language inputs become persisted pantry records through capability-aware model routing. Shared household membership, metered actions, payments, and operator controls surround the domain workflows. Recent implementation gives the Mini App a Kitchen workspace that invokes existing bot handlers and groups pantry items by source receipt. The project is actively implemented by one human author with automation-account commits.
+Pantry Manager is a household food tracker that accepts receipt photos and text, records expiry dates, and suggests recipes and meal plans. People can use it through Telegram, Slack, or WhatsApp; a Telegram Mini App provides a browser workspace (`app/messaging/`, `app/miniapp_workspace.py`). Household members share pantry data while choosing their own language and model provider (`app/models.py`, `app/providers.py`). The project is active and has one human author alongside automation-account commits.
 
-Role: sole author (431 of 447 repository commits across the owner’s Git identities, `git shortlog -sne 548eb0db3389e9918d1e5c9d2216587e261e3d78`; preserved upstream/contributor and automation history is excluded from the owner count)
+Role: sole author (463 of 483 commits across the owner's Git identities; the remaining 20 are automation-account commits; `git shortlog -sne 4b66acf`; `git rev-list --count 4b66acf`)
 Repository: https://github.com/awbjcj/pantry-manager
-Timeline: 2026-05 – present (`git log --reverse --format=%as`)
+Timeline: 2026-05 – present (`git log --reverse --format=%as 4b66acf`; `git log -1 --format=%as 4b66acf`)
 
 ## Tech stack (evidence-backed)
 
-- Python — services and handlers under `app/`.
-- aiogram — dispatcher and domain handlers in `app/bot.py` and `app/handlers/`.
-- aiohttp — Mini App routes in `app/webapp.py`.
-- SQLModel — household, pantry, usage, and subscription models in `app/models.py`.
-- SQLAlchemy — database engine and sessions in `app/db.py`.
-- SQLite — persistent datastore in `app/db.py`.
-- Alembic — schema migrations under `migrations/versions/`.
-- Anthropic API — receipt/text clients in `app/llm.py`.
-- OpenAI API — parallel model clients in `app/llm.py` and `app/cook/llm.py`.
+- Python — application services and handlers in `app/`.
+- TypeScript — Mini App interface and API contracts in `web/src/`.
+- aiogram — Telegram dispatcher and handlers in `app/bot.py` and `app/handlers/`.
+- aiohttp — Mini App and connection administration routes in `app/webapp.py` and `app/connection_admin.py`.
+- HTTPX — asynchronous messaging and recipe-source requests in `app/messaging/adapters/http.py` and `app/cook/recipe_source.py`.
+- SQLModel — household, pantry, messaging, and subscription models in `app/models.py`.
+- SQLAlchemy — engine and session construction in `app/db.py`.
+- SQLite — file-backed persistence in `app/db.py`.
+- Alembic — schema migrations in `migrations/versions/`.
+- Pydantic — validated messaging contracts and settings in `app/messaging/contracts.py` and `app/settings.py`.
+- APScheduler — per-user reminder scheduling in `app/scheduler.py`.
+- Agno — model construction in `app/agno_models.py`.
+- Anthropic API — model clients in `app/llm.py`.
+- OpenAI API — model clients in `app/llm.py` and `app/cook/llm.py`.
 - Google Gemini — model clients in `app/gemini_llm.py`.
 - DeepSeek — model clients in `app/deepseek_llm.py`.
-- Agno — model construction in `app/agno_models.py`.
-- APScheduler — per-user digest scheduling in `app/scheduler.py`.
-- Pydantic — typed model output and runtime configuration in `app/llm.py` and `app/settings.py`.
-- Spoonacular API — configured recipe-source implementation in `app/cook/recipe_source.py`.
+- Spoonacular API — recipe source in `app/cook/recipe_source.py`.
+- TheMealDB API — recipe source in `app/cook/recipe_source.py`.
+- Telegram — messaging adapter in `app/messaging/adapters/telegram.py`.
+- Slack — messaging adapter and webhook parsing in `app/messaging/adapters/slack.py` and `app/messaging/ingress.py`.
+- WhatsApp — messaging adapter and webhook parsing in `app/messaging/adapters/whatsapp.py` and `app/messaging/ingress.py`.
 - React — Mini App interface in `web/src/`.
-- TypeScript — Mini App API and workspace contracts in `web/src/`.
-- pytest — service and Mini App regression tests under `tests/`.
-- Docker — runtime image in `Dockerfile`.
+- Vite — Mini App build configuration in `web/vite.config.ts`.
+- pytest — application and fixture tests in `tests/`.
+- Playwright — Mini App browser tests in `web/tests/browser/mini-app.spec.ts`.
+- Docker — application image in `Dockerfile`.
+- GitHub Actions — build and test workflows in `.github/workflows/ci.yml`.
 
 ## Architecture highlights
 
-- Engineered capability-aware provider routing so receipt parsing selects an image-capable client while text tasks retain user preference (`app/providers.py`, `app/llm.py`).
-- Reused domain authorization, quotas, and confirmation transactions in the Mini App Kitchen by dispatching commands and server-owned card actions to existing handlers (`app/miniapp_workspace.py`, `tests/test_miniapp_workspace.py`; `28b4a9e`).
-- Made pantry receipt groups recognizable with source-receipt sorting, badges, and contextual action callbacks (`app/pantry_service.py`, `app/renderer.py`, `app/views.py`; `dd85ef6`).
-- Enforced metered admission and atomic payment-entitlement updates through `app/billing/meter.py` and `app/handlers/billing.py`.
-- Allowed live per-provider credential-mode overrides with credential-availability checks (`app/provider_mode_service.py`, `tests/test_provider_modes.py`).
-- Localized pantry and Mini App interactions through shared server and browser catalogs (`app/i18n.py`, `web/src/i18n.ts`, `tests/test_i18n_rendering.py`; `10ab208`).
+- Built messaging adapters for Telegram, Slack, and WhatsApp around shared event and delivery contracts (`app/messaging/contracts.py`, `app/messaging/adapters/`, `app/messaging/runtime.py`).
+- Hardened webhook intake with signature and provider-account checks, then deduplicated admitted events in a persistent inbox (`app/messaging/ingress.py`, `app/messaging/queue_service.py`, `app/connection_admin.py`).
+- Routed model requests by capability, preserving the selected text provider while allowing a photo-capable fallback for receipt parsing (`app/providers.py`, `app/llm.py`, `bin/run.py`).
+- Built versioned pantry batch actions that reject stale requests and commit item changes together (`app/batch_service.py`, `tests/test_store_batch.py`).
+- Ranked sourced recipes using expiry, nutrition, and household preferences while filtering excluded ingredients (`app/cook/service.py`, `app/cook/logic.py`, `app/preference_service.py`).
+- Implemented household usage admission and committed payment ledger entries and entitlement updates in one transaction (`app/billing/meter.py`, `app/handlers/billing.py`).
+- Reused domain authorization and confirmation flows in the Mini App by dispatching commands and server-owned card actions to existing handlers (`app/miniapp_workspace.py`, `tests/test_miniapp_workspace.py`).
+- Localized pantry interactions with static catalogs and cached translations for dynamic names (`app/i18n.py`, `app/translation_service.py`, `web/src/i18n.ts`).
 
 ## Quantified outcomes
 
-- Counted 819 declared Python test functions in 82 tracked files with test definitions; this is a static count, not a test-pass or coverage result (`git grep -E '^\s*(async\s+)?def\s+test_' 548eb0db3389e9918d1e5c9d2216587e261e3d78 -- .`, restricted to `test_*.py` / `*_test.py` paths).
-- Counted 203 tracked Python files, including tests where present (`git ls-tree -r --name-only 548eb0db3389e9918d1e5c9d2216587e261e3d78 -- .`, filtered to `.py`).
-- Recorded 447 repository commits at source revision `548eb0db` (`git rev-list --count 548eb0db3389e9918d1e5c9d2216587e261e3d78`).
-- None evidenced for production latency, uptime, business impact, or benchmarked model quality; no such outcome is claimed.
+- Reduced a local pytest-reported full-suite run from 176.25 s to 164.59 s (6.6%) by reusing schema-only SQLite templates; the later run included two additional tests (`docs/testing-performance.md`, commit `75706b3`).
+- Counted 968 Python test function or method declarations across 104 files at the source revision by summing per-file counts; this is a static count, not a test-pass or coverage result (`git grep -c -E '^[[:space:]]*(async[[:space:]]+)?def[[:space:]]+test_' 4b66acf -- tests`).
 
 ## Skills demonstrated
 
 Languages: Python, TypeScript
-Frameworks: aiogram, aiohttp, SQLModel, SQLAlchemy, Pydantic, Agno, APScheduler, React
+Frameworks: aiogram, aiohttp, SQLModel, SQLAlchemy, Pydantic, APScheduler, Agno, React
 Databases: SQLite
-AI and APIs: Anthropic API, OpenAI API, Google Gemini, DeepSeek, Spoonacular API
-Testing: pytest
-Tooling: Alembic, Docker
+APIs: Anthropic API, OpenAI API, Google Gemini, DeepSeek, Spoonacular API, TheMealDB API, Telegram, Slack, WhatsApp
+Testing: pytest, Playwright
+Tooling: HTTPX, Alembic, Vite, Docker, GitHub Actions
