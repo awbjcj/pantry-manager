@@ -40,16 +40,16 @@
 
 ## systemd（Linux）
 
-`/etc/systemd/system/food-manager.service`：
+`/etc/systemd/system/pantry-manager.service`：
 
     [Unit]
-    Description=Food Manager Telegram bot
+    Description=Pantry Manager Telegram bot
     After=network-online.target
     Wants=network-online.target
 
     [Service]
-    WorkingDirectory=/opt/food-manager
-    EnvironmentFile=/opt/food-manager/.env
+    WorkingDirectory=/opt/pantry-manager
+    EnvironmentFile=/opt/pantry-manager/.env
     ExecStart=/usr/local/bin/uv run python bin/run.py
     Restart=always
     RestartSec=5
@@ -57,7 +57,7 @@
     [Install]
     WantedBy=multi-user.target
 
-然后运行：`sudo systemctl enable --now food-manager`。
+然后运行：`sudo systemctl enable --now pantry-manager`。
 
 ## Docker Compose
 
@@ -65,7 +65,7 @@
 
     docker compose up --build -d
     docker compose ps
-    docker compose logs -f food-manager
+    docker compose logs -f pantry-manager
 
 使用 `docker compose down` 停止服务。除非明确要删除本地数据库，否则不要添加 `--volumes`。初始 `.env` 配置和直接运行镜像的命令请参阅 [`local-setup.zh-CN.md`](local-setup.zh-CN.md)。
 

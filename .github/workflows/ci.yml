@@ -83,7 +83,7 @@ jobs:
       - name: Build production container
         run: docker build --tag "$IMAGE_TAG" .
         env:
-          IMAGE_TAG: food-manager:${{ github.sha }}
+          IMAGE_TAG: pantry-manager:${{ github.sha }}
 
   security:
     name: Dependency audit

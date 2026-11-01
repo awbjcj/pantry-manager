@@ -441,7 +441,7 @@ def _adopt_bundle(live: LLMBundle, fresh: LLMBundle) -> None:
 
 
 async def _amain(settings: Settings) -> None:
-    log = logging.getLogger("food-manager")
+    log = logging.getLogger("pantry-manager")
     log.info("startup_begin")
 
     engine = make_engine(settings.database_path)

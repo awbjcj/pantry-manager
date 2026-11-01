@@ -594,7 +594,7 @@ wheels = [
 ]
 
 [[package]]
-name = "food-manager"
+name = "pantry-manager"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

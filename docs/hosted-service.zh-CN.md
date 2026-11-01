@@ -1,4 +1,4 @@
-# Food Manager 托管服务
+# Pantry Manager 托管服务
 
 [English](hosted-service.md) | [简体中文](hosted-service.zh-CN.md)
 
@@ -6,7 +6,7 @@
 
 在 Telegram 中打开 [@foodie_manager_bot](https://t.me/foodie_manager_bot)，然后点击**开始**。无需安装。
 
-Food Manager 能把购物小票转换成家庭共享的智能食品库，在食物过期前提醒家庭成员，并根据已有食材生成菜谱和多日膳食计划。支持英语、中文、法语和西班牙语。
+Pantry Manager 能把购物小票转换成家庭共享的智能食品库，在食物过期前提醒家庭成员，并根据已有食材生成菜谱和多日膳食计划。支持英语、中文、法语和西班牙语。
 
 ## 为什么使用托管机器人？
 
@@ -28,17 +28,17 @@ Food Manager 能把购物小票转换成家庭共享的智能食品库，在食�
 5. 使用 `/invite` 邀请一位家庭成员，或使用 `/invite family` 创建可重复使用的家庭邀请链接。
 6. 使用 `/quota` 查看共享额度；如需更多家庭成员席位、收据导入次数或 AI 操作次数，可使用 `/buy` 购买家庭套餐或一次性加量包。
 
-Mini App 托管于 [food-manager-production.up.railway.app](https://food-manager-production.up.railway.app)。请从机器人菜单中的**打开应用**按钮进入，以便 Telegram 安全验证你的账户。
+Mini App 托管于 [pantry-manager-production.up.railway.app](https://pantry-manager-production.up.railway.app)。请从机器人菜单中的**打开应用**按钮进入，以便 Telegram 安全验证你的账户。 旧的 Railway 地址继续可用，以兼容现有链接。
 
 本源码版本中的厨房工作区详见 [Mini App 操作指南](mini-app.zh-CN.md)。托管服务需要部署此版本后才能使用这些功能。
 
 ## 可直接分享的推广文案
 
-> 少浪费食物，更轻松地决定吃什么。Food Manager 能把 Telegram 中的购物小票照片转换成家庭共享食品库，发送临期提醒，并利用已有食材生成菜谱和每周晚餐计划。免费试用：https://t.me/foodie_manager_bot
+> 少浪费食物，更轻松地决定吃什么。Pantry Manager 能把 Telegram 中的购物小票照片转换成家庭共享食品库，发送临期提醒，并利用已有食材生成菜谱和每周晚餐计划。免费试用：https://t.me/foodie_manager_bot
 
 简短版：
 
-> 扫描小票，跟踪保质期，规划晚餐，减少浪费。在 Telegram 中试用 Food Manager：https://t.me/foodie_manager_bot
+> 扫描小票，跟踪保质期，规划晚餐，减少浪费。在 Telegram 中试用 Pantry Manager：https://t.me/foodie_manager_bot
 
 ## 套餐
 
@@ -46,4 +46,4 @@ Mini App 托管于 [food-manager-production.up.railway.app](https://food-manager
 
 ## 服务状态
 
-托管应用运行在 Railway 上。公共健康检查端点为 <https://food-manager-production.up.railway.app/healthz>。
+托管应用运行在 Railway 上。公共健康检查端点为 <https://pantry-manager-production.up.railway.app/healthz>。

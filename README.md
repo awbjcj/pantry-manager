@@ -1,10 +1,10 @@
-# food-manager
+# Pantry Manager
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-[![CI/CD](https://github.com/awbjcj/food-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/awbjcj/food-manager/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/github/v/tag/awbjcj/food-manager?sort=semver&label=version)](https://github.com/awbjcj/food-manager/tags)
-[![Release](https://img.shields.io/github/v/release/awbjcj/food-manager?label=release)](https://github.com/awbjcj/food-manager/releases)
+[![CI/CD](https://github.com/awbjcj/pantry-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/awbjcj/pantry-manager/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/github/v/tag/awbjcj/pantry-manager?sort=semver&label=version)](https://github.com/awbjcj/pantry-manager/tags)
+[![Release](https://img.shields.io/github/v/release/awbjcj/pantry-manager?label=release)](https://github.com/awbjcj/pantry-manager/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A Telegram bot and Mini App that track your household's grocery pantry, turn
@@ -21,7 +21,7 @@ Start on the free plan, then invite your household or upgrade with Telegram
 Stars when you need more receipts, AI actions, or member seats.
 
 The hosted Mini App is served from
-[food-manager-production.up.railway.app](https://food-manager-production.up.railway.app),
+[pantry-manager-production.up.railway.app](https://pantry-manager-production.up.railway.app),
 but account access is authenticated by Telegram—open it through the bot's
 **Open app** button. See [the hosted service guide](docs/hosted-service.md) for
 share-ready promotional copy and onboarding instructions.
@@ -73,7 +73,7 @@ docker compose up --build -d
 
 # 3. Check readiness and follow startup logs.
 docker compose ps
-docker compose logs -f food-manager
+docker compose logs -f pantry-manager
 ```
 
 Open <http://localhost:8000/healthz> and expect `{"ok": true}`, then send
@@ -143,7 +143,7 @@ uv run pytest tests/test_core_services.py::test_shelf_life_defaults
 ## Deploy to Railway
 
 1. Create or import the project in Railway, then connect the service source to
-   `awbjcj/food-manager` on the `master` branch with automatic deploys enabled.
+   `awbjcj/pantry-manager` on the `master` branch with automatic deploys enabled.
 2. Add a persistent volume named `food-data` mounted at `/data`.
 3. Set Railway service variables matching `.env.example`.
 4. Push or merge to `master`. Railway builds and deploys the new revision

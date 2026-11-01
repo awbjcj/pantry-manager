@@ -1,8 +1,8 @@
-# Food Manager
+# Pantry Manager
 
 [English](CONTEXT.md) | [简体中文](CONTEXT.zh-CN.md)
 
-Food Manager 跟踪从购物小票采集到临期提醒的整个食品管理流程。
+Pantry Manager 跟踪从购物小票采集到临期提醒的整个食品管理流程。
 
 ## 术语
 

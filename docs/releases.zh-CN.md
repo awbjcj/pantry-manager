@@ -54,8 +54,8 @@ Release，按主版本汇总，其余里程碑只添加标签。
 先预览完整历史计划，再执行写入：
 
 ```text
-python bin/release.py backfill --repo awbjcj/food-manager
-python bin/release.py backfill --repo awbjcj/food-manager --apply
+python bin/release.py backfill --repo awbjcj/pantry-manager
+python bin/release.py backfill --repo awbjcj/pantry-manager --apply
 ```
 
 脚本在写入前验证全部目标都属于生产历史，并检查所有已有标签是否冲突。

@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 packages = ["app"]
 
 [project]
-name = "food-manager"
+name = "pantry-manager"
 version = "0.1.0"
 description = "Single-user grocery pantry + expiry-reminder Telegram bot"
 readme = "README.md"
@@ -28,7 +28,7 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/awbjcj/food-manager"
+Repository = "https://github.com/awbjcj/pantry-manager"
 
 [dependency-groups]
 dev = [
