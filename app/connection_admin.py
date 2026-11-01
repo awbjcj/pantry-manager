@@ -409,10 +409,10 @@ class ConnectionAdmin:
             }
             if row.provider == "slack":
                 result["manifest"] = {
-                    "display_information": {"name": "Food Manager"},
+                    "display_information": {"name": "Pantry Manager"},
                     "features": {
                         "bot_user": {
-                            "display_name": "Food Manager",
+                            "display_name": "Pantry Manager",
                             "always_online": False,
                         },
                         "slash_commands": [
@@ -589,7 +589,7 @@ class ConnectionAdmin:
                     conversation=ConversationRef.model_validate(
                         config["testConversation"]
                     ),
-                    content=ChatMessage(text="Food Manager connection test succeeded."),
+                    content=ChatMessage(text="Pantry Manager connection test succeeded."),
                 ),
                 user=None,
                 now=self.runtime.now(),
