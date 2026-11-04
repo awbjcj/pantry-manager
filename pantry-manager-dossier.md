@@ -1,20 +1,20 @@
 ---
 repo_url: https://github.com/awbjcj/pantry-manager
 repo_name: food-manager
-role: sole author
-generated_at: 2026-11-02
-source_revision: 82e0e9dc923c7f45e0d9a336996a0f1ccf87aeb6
+role: maintainer
+generated_at: 2026-11-04
 ---
 
 # Project: Pantry Manager
 
 ## Summary
 
-Pantry Manager is a household food tracker that accepts receipt photos and text, records expiry dates, and suggests recipes and meal plans. People can use it through Telegram, Slack, or WhatsApp; a Telegram Mini App provides a browser workspace (`app/messaging/`, `app/miniapp_workspace.py`). Household members share pantry data while choosing their own language and model provider (`app/models.py`, `app/providers.py`). The project is active and has one human author alongside automation-account commits.
+Pantry Manager is a household food tracker that accepts receipt photos and text, tracks expiry dates, and suggests recipes and meal plans. It supports Telegram, Slack, and WhatsApp, with a Telegram Mini App for browser access (`app/messaging/`, `app/miniapp_workspace.py`). Household members share pantry data while choosing their own language and model provider (`app/models.py`, `app/providers.py`). The maintainer implemented the messaging runtime and pantry batch workflow (commits `a26af884`, `171e6e5c`). The repository is active.
 
-Role: sole author (464 of 484 commits across the owner's Git identities; the remaining 20 are automation-account commits; `git shortlog -sne 82e0e9d`; `git rev-list --count 82e0e9d`)
+Role: maintainer (465 of 485 reachable commits across the owner's Git identities; the remaining 20 are automation-account commits, including an application-code change in `b697244`; `git shortlog -sne 3b44ed7`; `git rev-list --count 3b44ed7`)
 Repository: https://github.com/awbjcj/pantry-manager
-Timeline: 2026-05 – present (`git log --reverse --format=%as 82e0e9d`; `git log -1 --format=%as 82e0e9d`)
+Timeline: 2026-05 – present (`git log --reverse --format=%as 3b44ed7`; `git log -1 --format=%as 3b44ed7`)
+Project context: unknown
 
 ## Tech stack (evidence-backed)
 
@@ -28,6 +28,8 @@ Timeline: 2026-05 – present (`git log --reverse --format=%as 82e0e9d`; `git lo
 - SQLite — file-backed persistence in `app/db.py`.
 - Alembic — schema migrations in `migrations/versions/`.
 - Pydantic — validated messaging contracts and settings in `app/messaging/contracts.py` and `app/settings.py`.
+- cryptography — encrypted managed messaging credentials in `app/messaging/connection_service.py`.
+- OAuth 2.0 — Slack connection authorization in `app/connection_admin.py`.
 - APScheduler — per-user reminder scheduling in `app/scheduler.py`.
 - Agno — model construction in `app/agno_models.py`.
 - Anthropic API — model clients in `app/llm.py`.
@@ -35,7 +37,7 @@ Timeline: 2026-05 – present (`git log --reverse --format=%as 82e0e9d`; `git lo
 - Google Gemini — model clients in `app/gemini_llm.py`.
 - DeepSeek — model clients in `app/deepseek_llm.py`.
 - Spoonacular API — recipe source in `app/cook/recipe_source.py`.
-- TheMealDB API — recipe source in `app/cook/recipe_source.py`.
+- TheMealDB API — recipe source in `app/cook/recipe_source.py`, wired at bootstrap in `bin/run.py`.
 - Telegram — messaging adapter in `app/messaging/adapters/telegram.py`.
 - Slack — messaging adapter and webhook parsing in `app/messaging/adapters/slack.py` and `app/messaging/ingress.py`.
 - WhatsApp — messaging adapter and webhook parsing in `app/messaging/adapters/whatsapp.py` and `app/messaging/ingress.py`.
@@ -50,17 +52,25 @@ Timeline: 2026-05 – present (`git log --reverse --format=%as 82e0e9d`; `git lo
 
 - Built messaging adapters for Telegram, Slack, and WhatsApp around shared event and delivery contracts (`app/messaging/contracts.py`, `app/messaging/adapters/`, `app/messaging/runtime.py`).
 - Hardened webhook intake with signature and provider-account checks, then deduplicated admitted events in a persistent inbox (`app/messaging/ingress.py`, `app/messaging/queue_service.py`, `app/connection_admin.py`).
+- Prevented automatic repetition of uncertain in-flight sends and paid operations after a restart by marking them unknown (`app/messaging/queue_service.py:recover_interrupted`, `app/messaging/runtime.py:MessagingRuntime.start`; commit `a26af884`).
+- Restricted queued deliveries after membership revocation by checking the saved household and membership generation before sending (`app/messaging/runtime.py:MessagingRuntime.send_one`, `tests/test_messaging.py:test_revocation_suppresses_pending_delivery_and_restart_never_repeats_unknown`; commit `a26af884`).
+- Protected managed provider credentials with encryption and bound Slack OAuth 2.0 state to an admin session, expiry, and connection revision (`app/messaging/connection_service.py:SecretStore`, `app/connection_admin.py:ConnectionAdmin.oauth_callback`; commit `a26af884`).
 - Routed model requests by capability, preserving the selected text provider while allowing a photo-capable fallback for receipt parsing (`app/providers.py`, `app/llm.py`, `bin/run.py`).
+- Modeled forward-only food storage transitions and recalculated expiry from a shared purchase-or-storage date (`app/storage_state.py`, `tests/test_fridge_storage.py:test_origin_and_expiry_use_stored_on_when_present`; commit `c3fda98e`).
+- Resolved fridge and frozen shelf life through household cache, a local FoodKeeper table, optional search, and a default (`app/frozen_shelf_life.py:resolve_storage_days`; commit `c3fda98e`).
 - Built versioned pantry batch actions that reject stale requests and commit item changes together (`app/batch_service.py`, `tests/test_store_batch.py`).
 - Ranked sourced recipes using expiry, nutrition, and household preferences while filtering excluded ingredients (`app/cook/service.py`, `app/cook/logic.py`, `app/preference_service.py`).
 - Implemented household usage admission and committed payment ledger entries and entitlement updates in one transaction (`app/billing/meter.py`, `app/handlers/billing.py`).
+- Prevented a replayed payment from granting a top-up twice by checking its charge ID before committing the ledger and entitlement (`app/handlers/billing.py:handle_successful_payment`, `tests/test_v60_payments.py:test_replayed_topup_is_not_double_granted`; commit `c8455e37`).
 - Reused domain authorization and confirmation flows in the Mini App by dispatching commands and server-owned card actions to existing handlers (`app/miniapp_workspace.py`, `tests/test_miniapp_workspace.py`).
+- Acknowledged callbacks before deferred work and retried failed message edits as fresh messages (`app/callback_dispatch.py:apply`, `app/callback_dispatch.py:edit_or_resend`; commits `a075fe44`, `26e1fff0`).
 - Localized pantry interactions with static catalogs and cached translations for dynamic names (`app/i18n.py`, `app/translation_service.py`, `web/src/i18n.ts`).
 
 ## Quantified outcomes
 
-- Reduced a local pytest-reported full-suite run from 176.25 s to 164.59 s (6.6%) by reusing schema-only SQLite templates; the later run included two additional tests (`docs/testing-performance.md`, commit `75706b3`).
-- Counted 968 Python test function or method declarations across 104 files at the source revision by summing per-file counts; this is a static count, not a test-pass or coverage result (`git grep -c -E '^[[:space:]]*(async[[:space:]]+)?def[[:space:]]+test_' 82e0e9d -- tests`).
+- Reduced one local pytest-reported full-suite run from 176.25 s to 164.59 s (6.6%) after reusing schema-only SQLite templates; the later serial run included two additional fixture tests (`docs/testing-performance.md`, commit `75706b3`).
+- Reduced the summed test-phase time for seven affected modules from 43.97 s to 14.17 s (67.8%) in the same local comparison (`docs/testing-performance.md`, commit `75706b3`).
+- Counted 968 Python test function or method declarations across 104 files at revision `3b44ed7` by summing per-file counts; this is a static count, not a test-pass or coverage result (`git grep -c -E '^[[:space:]]*(async[[:space:]]+)?def[[:space:]]+test_' 3b44ed7 -- tests`).
 
 ## Skills demonstrated
 
@@ -104,6 +114,12 @@ Timeline: 2026-05 – present (`git log --reverse --format=%as 82e0e9d`; `git lo
   - Evidence:
     - Defined typed fields for parsed receipt items — `app/llm.py:ParsedItem` (commit `5b745c76`).
     - Rejected incoming events whose actor, conversation, or content refer to another connection — `app/messaging/contracts.py:IncomingEvent.same_connection` (commit `a26af884`).
+- Name: cryptography
+  - Aliases: Python cryptography
+  - Context: Encrypted managed messaging credentials before storing them and rejected missing keys or invalid ciphertext.
+  - Evidence:
+    - Serialized and encrypted connection credentials with Fernet — `app/messaging/connection_service.py:SecretStore.encrypt` (commit `a26af884`).
+    - Decrypted credentials for the runtime and rejected invalid ciphertext — `app/messaging/connection_service.py:SecretStore.decrypt` (commit `a26af884`).
 - Name: APScheduler
   - Context: Scheduled per-user digests and cleanup jobs.
   - Evidence:
@@ -130,6 +146,13 @@ Timeline: 2026-05 – present (`git log --reverse --format=%as 82e0e9d`; `git lo
 
 ### Cloud & Infra
 
+- Name: OAuth 2.0
+  - Aliases: OAuth2
+  - Context: Implemented Slack installation with session-bound, expiring authorization state.
+  - Evidence:
+    - Generated a state token tied to the admin session and connection revision — `app/connection_admin.py:ConnectionAdmin.oauth_start` (commit `a26af884`).
+    - Consumed the state once and rejected expired, mismatched, or stale connection requests — `app/connection_admin.py:ConnectionAdmin.oauth_callback` (commit `a26af884`).
+    - Tested that the state belongs to its original session and cannot be reused — `tests/test_messaging_runtime.py:test_slack_oauth_state_is_session_bound_and_single_use` (commit `a26af884`).
 - Name: Anthropic API
   - Context: Integrated receipt-image parsing and natural-language pantry commands.
   - Evidence:
@@ -156,10 +179,11 @@ Timeline: 2026-05 – present (`git log --reverse --format=%as 82e0e9d`; `git lo
     - Mapped diet, exclusions, and ingredient criteria into request parameters — `app/cook/recipe_source.py:spoonacular_params` (commit `5faf297e`).
     - Fetched and mapped recipe results into application candidates — `app/cook/recipe_source.py:SpoonacularSource.search` (commit `43a4b5f5`).
 - Name: TheMealDB API
-  - Context: Added a recipe source with ingredient search and detail lookup.
+  - Context: Implemented a recipe source with ingredient search and detail lookup and added it to the configured source chain.
   - Evidence:
     - Fetched recipe details and mapped their ingredients — `app/cook/recipe_source.py:TheMealDbSource` (commit `87276a20`).
     - Tested mapping when nutrition data is unavailable — `tests/test_recipe_source.py:test_themealdb_source_maps_recipe_without_nutrition` (commit `87276a20`).
+    - Added the source to the application bootstrap — `bin/run.py:485-487` (commit `d9870fc4`).
 - Name: Telegram
   - Context: Delivered pantry messages and handled receipt media through a messaging adapter.
   - Evidence:
@@ -179,10 +203,12 @@ Timeline: 2026-05 – present (`git log --reverse --format=%as 82e0e9d`; `git lo
 ### Testing
 
 - Name: pytest
-  - Context: Wrote regression cases for database isolation and atomic pantry changes.
+  - Context: Wrote regression cases for database isolation, pantry changes, storage rules, and delivery recovery.
   - Evidence:
     - Checked that copied schemas start empty and retain real commits — `tests/test_database_fixtures.py:test_schema_copy_starts_empty_and_preserves_real_commits` (commit `75706b37`).
     - Tested rollback when a selected batch row is missing — `tests/test_store_batch.py:test_batch_atomic_rollback_and_missing_selected_row` (commit `87db2f65`).
+    - Tested forward-only storage changes and expiry calculation — `tests/test_fridge_storage.py:test_forward_only_transitions`, `tests/test_fridge_storage.py:test_origin_and_expiry_use_stored_on_when_present` (commit `c3fda98e`).
+    - Checked that a rate-limited send is retried while an unknown delivery is not repeated — `tests/test_messaging_runtime.py:test_sender_rate_limit_retries_but_unknown_is_terminal` (commit `a26af884`).
 - Name: Playwright
   - Context: Exercised Mini App forms and confirmation behavior in browser tests.
   - Evidence:
@@ -197,16 +223,35 @@ Timeline: 2026-05 – present (`git log --reverse --format=%as 82e0e9d`; `git lo
     - Defined a delivery and media-download adapter contract — `app/messaging/contracts.py:MessagingAdapter` (commit `a26af884`).
     - Dispatched browser workspace actions to existing command and callback handlers — `app/miniapp_workspace.py:WorkspaceRuntime._run` (commit `28b4a9ea`).
 - Name: Security
-  - Context: Validated webhook requests and required confirmation when linking identities.
+  - Context: Validated webhook requests, protected managed credentials, and checked identity before linking accounts or sending messages.
   - Evidence:
     - Checked signed requests and rejected stale Slack events — `app/messaging/ingress.py:verify_slack` (commit `a26af884`).
     - Required the original account to confirm a pending account link — `app/messaging/identity_service.py:confirm_link` (commit `a26af884`).
     - Checked Mini App users against household authorization before serving account data — `app/webapp.py:MiniAppApi.authorized_user` (commit `5c39dea1`).
+    - Suppressed queued messages when the saved membership no longer matched the current user — `app/messaging/runtime.py:MessagingRuntime.send_one` (commit `a26af884`).
+    - Returned credential presence rather than the stored credential in connection details — `app/messaging/connection_service.py:public_connection` (commit `a26af884`).
+- Name: Data privacy
+  - Context: Limited exposure of managed credentials and old inbound message content.
+  - Evidence:
+    - Kept managed provider credentials encrypted and omitted their values from the connection response — `app/messaging/connection_service.py:SecretStore.encrypt`, `app/messaging/connection_service.py:public_connection` (commit `a26af884`).
+    - Cleared content from completed, failed, and unknown inbox records older than 30 days during startup recovery while retaining their deduplication keys — `app/messaging/queue_service.py:recover_interrupted`, `app/messaging/runtime.py:MessagingRuntime.start` (commit `a26af884`).
 - Name: Concurrency
   - Context: Protected state changes from stale requests and isolated shared-agent sessions.
   - Evidence:
     - Claimed a batch version before changing pantry items — `app/batch_service.py:change_selection` (commit `171e6e5c`).
     - Assigned a fresh session identifier to each intent request — `app/nl_intent.py:AgnoIntentAgent.parse` (commit `6001ef0d`).
+- Name: Domain modeling
+  - Context: Modeled food storage as forward-only states and based expiry on the applicable purchase or storage date.
+  - Evidence:
+    - Defined valid storage transitions and the shared expiry formula — `app/storage_state.py:next_storage_options`, `app/storage_state.py:compute_expiry` (commit `c3fda98e`).
+    - Resolved storage-specific durations through the cache, local reference data, search, and fallback — `app/frozen_shelf_life.py:resolve_storage_days` (commit `c3fda98e`).
+    - Tested that chilling and then freezing resets the shelf-life origin — `tests/test_fridge_storage.py:test_chill_then_freeze_resets_origin_and_shelf_life` (commit `c3fda98e`).
+- Name: Reliability engineering
+  - Context: Distinguished retryable failures from uncertain external outcomes and kept interactive callbacks responsive.
+  - Evidence:
+    - Marked interrupted inbox processing and outbox sends unknown rather than repeating potentially completed work — `app/messaging/queue_service.py:recover_interrupted` (commit `a26af884`).
+    - Tested that a rate-limited delivery can retry while an unknown send is terminal — `tests/test_messaging_runtime.py:test_sender_rate_limit_retries_but_unknown_is_terminal` (commit `a26af884`).
+    - Acknowledged callbacks before deferred work and attempted a fresh message after an unsuccessful edit — `app/callback_dispatch.py:apply`, `app/callback_dispatch.py:edit_or_resend` (commits `a075fe44`, `26e1fff0`).
 - Name: Database transactions
   - Context: Kept batch mutations and payment entitlement changes consistent.
   - Evidence:
