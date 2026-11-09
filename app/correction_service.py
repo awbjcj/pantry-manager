@@ -303,7 +303,10 @@ def apply_correct(
             category=new_category,
             commit=False,
         )
-    elif payload.cache_action == "add_new":
+    elif payload.cache_action == "add_new" or (
+        payload.cache_action == "leave"
+        and (days_change is not None or (category_change is not None and name_change is None))
+    ):
         write_user_correction(
             session,
             household_id,
@@ -312,16 +315,6 @@ def apply_correct(
             category=new_category,
             commit=False,
         )
-    elif payload.cache_action == "leave":
-        if days_change is not None or (category_change is not None and name_change is None):
-            write_user_correction(
-                session,
-                household_id,
-                new_cache_key,
-                days=new_days,
-                category=new_category,
-                commit=False,
-            )
     session.flush()
 
 

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from sqlmodel import Session, select
+from sqlalchemy import update
+from sqlmodel import Session, col
 
 from app.models import PendingCorrection
 
@@ -71,11 +72,22 @@ def set_message_id(
 def _set_terminal(
     session: Session, *, pending: PendingCorrection, status: str
 ) -> None:
-    if pending.status != "pending":
+    # A loaded ORM object can be stale when another worker handles the same
+    # button. Claim the row in the database before changing pantry data, and
+    # keep both changes in the caller's transaction.
+    claimed_id = session.execute(
+        update(PendingCorrection)
+        .where(
+            col(PendingCorrection.id) == pending.id,
+            col(PendingCorrection.household_id) == pending.household_id,
+            col(PendingCorrection.status) == "pending",
+        )
+        .values(status=status)
+        .returning(col(PendingCorrection.id))
+    ).scalar_one_or_none()
+    session.refresh(pending)
+    if claimed_id is None:
         raise PendingNotPending(pending.status)
-    pending.status = status
-    session.add(pending)
-    session.flush()
 
 
 def mark_applied(session: Session, *, pending: PendingCorrection) -> None:
@@ -86,6 +98,10 @@ def mark_cancelled(session: Session, *, pending: PendingCorrection) -> None:
     _set_terminal(session, pending=pending, status="cancelled")
 
 
+def mark_expired(session: Session, *, pending: PendingCorrection) -> None:
+    _set_terminal(session, pending=pending, status="expired")
+
+
 def expire_for_item(
     session: Session,
     *,
@@ -93,35 +109,30 @@ def expire_for_item(
     item_id: int,
     exclude_pending_id: int | None = None,
 ) -> int:
-    query = select(PendingCorrection).where(
-        PendingCorrection.household_id == household_id,
-        PendingCorrection.item_id == item_id,
-        PendingCorrection.status == "pending",
+    query = update(PendingCorrection).where(
+        col(PendingCorrection.household_id) == household_id,
+        col(PendingCorrection.item_id) == item_id,
+        col(PendingCorrection.status) == "pending",
     )
     if exclude_pending_id is not None:
-        query = query.where(PendingCorrection.id != exclude_pending_id)
-    rows = list(session.exec(query).all())
-    for row in rows:
-        row.status = "stale"
-        session.add(row)
-    if rows:
-        session.flush()
+        query = query.where(col(PendingCorrection.id) != exclude_pending_id)
+    rows = session.execute(
+        query.values(status="stale").returning(col(PendingCorrection.id))
+    ).all()
     return len(rows)
 
 
 def sweep_expired(session: Session, *, now: datetime) -> int:
     now = utc_naive(now)
-    rows = list(
-        session.exec(
-            select(PendingCorrection).where(
-                PendingCorrection.status == "pending",
-                PendingCorrection.expires_at < now,
-            )
-        ).all()
-    )
-    for row in rows:
-        row.status = "expired"
-        session.add(row)
+    rows = session.execute(
+        update(PendingCorrection)
+        .where(
+            col(PendingCorrection.status) == "pending",
+            col(PendingCorrection.expires_at) < now,
+        )
+        .values(status="expired")
+        .returning(col(PendingCorrection.id))
+    ).all()
     if rows:
         session.commit()
     return len(rows)
