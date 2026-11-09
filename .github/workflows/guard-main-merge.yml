@@ -1,4 +1,4 @@
-name: Guard main merges
+name: Guard master merges
 
 on:
   pull_request:

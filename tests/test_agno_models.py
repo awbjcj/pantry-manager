@@ -28,7 +28,7 @@ class _Schema(BaseModel):
 def _credentials(provider: str, base_url: str | None = None) -> ProviderCredentials:
     return ProviderCredentials(
         provider=provider,  # type: ignore[arg-type]
-        mode="api",
+        mode="subscription" if base_url else "api",
         api_key="test-key-not-used-no-request-is-sent",
         base_url=base_url,
     )
@@ -67,11 +67,22 @@ def test_claude_structured_output_kwargs_are_accepted_by_installed_anthropic_sdk
         system_message="You classify messages.", response_format=_Schema
     )
 
-    uses_beta = model._has_beta_features(response_format=_Schema, tools=None)
+    has_beta_features = getattr(model, "_has_beta_features", None)
+    assert callable(has_beta_features), (
+        "Agno's Claude adapter no longer exposes _has_beta_features; "
+        "re-point this test at the endpoint selection logic."
+    )
+    uses_beta = has_beta_features(response_format=_Schema, tools=None)
     endpoint = BetaMessages if uses_beta else StableMessages
 
-    accepted = set(inspect.signature(endpoint.create).parameters)
-    unexpected = set(emitted) - accepted
+    parameters = inspect.signature(endpoint.create).parameters
+    accepts_kwargs = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in parameters.values())
+    unexpected = set() if accepts_kwargs else {
+        key for key in emitted
+        if key not in parameters or parameters[key].kind not in (
+            inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY,
+        )
+    }
     assert not unexpected, (
         f"Agno sends {sorted(unexpected)} to anthropic's "
         f"{'beta' if uses_beta else 'stable'} create(), which does not accept it. "
