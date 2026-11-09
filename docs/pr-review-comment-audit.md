@@ -1,5 +1,22 @@
 # Historical PR review comment audit
 
+## Follow-up
+
+The F01-F14 fixes below were merged in PR #54. The remaining review findings
+were checked again on `dev`:
+
+- C28: pending apply, cancel, expiry, and stale transitions use guarded database
+  updates. A claim and the associated pantry change commit together; concurrent
+  callbacks and a failed write are covered by `test_pending_concurrency.py`.
+- C09-C11: the Agno contract test now uses the correct credential mode, accepts
+  SDK methods with `**kwargs`, and explains a missing endpoint-selection helper.
+- C13: the workflow is named for `master`; the required job check retains its
+  existing name. C07 is addressed by correcting the historical PR title.
+- C06 remains addressed by the current two-child subscription layout; no new
+  visual acceptance test was run. C31's original parser was removed. When quota
+  is exhausted, the current intentionally simpler fallback treats the submitted
+  text as one item rather than parsing the documented multi-item example.
+
 Audited repository: `awbjcj/pantry-manager`. Code snapshot: `dev` at `ac1c175fd7e586543b1089c6c1e0186830d28141`. After fetching origin, local `HEAD` and `origin/dev` had zero divergence.
 
 All 53 pull requests (open, closed, and merged) were inspected, including 26 conversation comments, 30 review submissions, and 40 inline threads. Four inline threads were already resolved. The 36 unresolved threads below span 16 PRs; no thread-comment pages were truncated. Top-level bot summaries and review receipts add no separately actionable unresolved items.
@@ -8,8 +25,8 @@ All 53 pull requests (open, closed, and merged) were inspected, including 26 con
 
 All **F01-F14** were selected and implemented locally on `fix/pr-review-comments`.
 The inventory below preserves the original audit findings at the snapshot above;
-its “Fix” entries describe the defects before these patches. GitHub threads and
-production deployments have not been changed.
+its “Fix” entries describe the defects before these patches. At that point,
+GitHub threads and production deployments had not been changed.
 
 | Group | Implemented behavior | Regression coverage |
 | --- | --- | --- |
