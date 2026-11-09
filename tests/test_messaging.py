@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+from base64 import urlsafe_b64encode
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
@@ -17,6 +18,7 @@ from app.client_set import EMPTY_CLIENTS
 from app.connection_admin import register_connection_routes
 from app.messaging.adapters.slack import SlackAdapter
 from app.messaging.adapters.whatsapp import WhatsAppAdapter
+from app.messaging.connection_service import SecretStore
 from app.messaging.contracts import (
     Accepted,
     ActionButton,
@@ -55,6 +57,16 @@ from app.models import (
 )
 
 NOW = datetime(2026, 10, 30, 14, tzinfo=UTC)
+
+
+def test_secret_store_decrypts_credentials_written_by_cryptography_48():
+    # Synthetic credentials encrypted with cryptography 48.0.1 and an all-zero test key.
+    key = urlsafe_b64encode(bytes(32)).decode()
+    ciphertext = (
+        "gAAAAABlU_EAlVN9Bp5zYcjIPsZ8nn8XcY172YwOHu-uAZy9KyfUagkQh2ik_"
+        "bSeBS4GdkKRc0vJd57WDSxwNes01urJSpTpwQHO-mmjylhvLWK7MzRLS1qQGwSoO-_jgOOw68WEuzVK"
+    )
+    assert SecretStore(key).decrypt(ciphertext) == {"botToken": "example-test-credential"}
 
 
 @pytest.fixture
