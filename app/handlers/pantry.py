@@ -13,6 +13,7 @@ from app.cache import get_cached
 from app.client_set import PerUserClients
 from app.commands import (
     CommandError,
+    parse_basic_add,
     parse_correct_reply_marker,
     parse_item_id_arg,
     parse_list_filter,
@@ -241,36 +242,40 @@ async def handle_add(
         )
         raw_text = parts[1].strip()
         if not decision.allowed:
-            normalized = normalize(raw_text)
-            cached = get_cached(session, user.household_id, normalized)
-            default = lookup_default(normalized)
-            days = cached.days if cached is not None else default.days if default else 7
-            category = (
-                cached.category
-                if cached is not None
-                else default.category
-                if default is not None
-                else None
-            )
-            session.add(
-                PantryItem(
-                    household_id=user.household_id,
-                    raw_name=raw_text,
-                    normalized_name=normalized,
-                    category=category,
-                    purchased_on=today,
-                    shelf_life_days=days,
-                    shelf_life_source="manual_fallback",
-                    ingest_shelf_life_source="manual_fallback",
-                    expires_on=today + timedelta(days=days),
-                    created_via="manual",
-                    created_at=datetime.now(UTC),
+            replies = []
+            for basic_item in parse_basic_add(raw_text):
+                normalized = normalize(basic_item.name)
+                cached = get_cached(session, user.household_id, normalized)
+                default = lookup_default(normalized)
+                days = cached.days if cached is not None else default.days if default else 7
+                category = (
+                    cached.category
+                    if cached is not None
+                    else default.category
+                    if default is not None
+                    else None
                 )
-            )
+                session.add(
+                    PantryItem(
+                        household_id=user.household_id,
+                        raw_name=basic_item.name,
+                        normalized_name=normalized,
+                        category=category,
+                        qty=basic_item.qty,
+                        unit=basic_item.unit,
+                        purchased_on=today,
+                        shelf_life_days=days,
+                        shelf_life_source="manual_fallback",
+                        ingest_shelf_life_source="manual_fallback",
+                        expires_on=today + timedelta(days=days),
+                        created_via="manual",
+                        created_at=datetime.now(UTC),
+                    )
+                )
+                replies.append(t("quota.degraded.add", user.lang, name=basic_item.name, days=days))
             session.commit()
-            await msg.reply(
-                t("quota.degraded.add", user.lang, name=raw_text, days=days)
-            )
+            for reply in replies:
+                await msg.reply(reply)
             return
         progress = await start_progress(msg, t("progress.parsing_add", user.lang))
         await _run_add_flow(

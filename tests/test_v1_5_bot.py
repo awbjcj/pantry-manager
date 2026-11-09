@@ -7,7 +7,10 @@ from sqlmodel import Session, SQLModel, create_engine, select
 import app.bot as bot_mod
 from app import handler_support
 from app.client_set import PerUserClients
+from app.commands import BasicAddItem, parse_basic_add
 from app.correction_service import CorrectPayload, correct_payload_to_json
+from app.handlers import pantry as pantry_handlers
+from app.i18n import t
 from app.llm import CorrectionDiff, ProposedAddItem
 from app.models import Household, PantryItem, PendingCorrection, User
 from app.pending_service import create_pending
@@ -269,6 +272,48 @@ async def test_handle_add_sends_one_pending_message_per_item(session_factory, mo
         assert {row.action_type for row in rows} == {"add"}
         assert {row.message_id for row in rows} == {1001, 1002}
         assert sum(row.llm_cost_micros_usd for row in rows) == 200
+
+
+@pytest.mark.parametrize("lang", ["en", "zh", "fr", "es"])
+async def test_quota_degraded_add_parses_documented_multi_item_example(
+    session_factory, monkeypatch, lang,
+):
+    monkeypatch.setattr(handler_support, "ALLOWED_TELEGRAM_USER_ID", 1)
+    monkeypatch.setattr(pantry_handlers, "admit", lambda *args, **kwargs: MagicMock(allowed=False))
+    with session_factory() as db:
+        user = db.exec(select(User).where(User.telegram_id == 1)).one()
+        user.lang = lang
+        db.add(user)
+        db.commit()
+
+    fake = FakeTextLLMClient()
+    msg = _msg("/add 2 lb chicken, dozen eggs")
+    await bot_mod.handle_add(
+        msg, session_factory=session_factory,
+        now_provider=lambda tz: datetime(2026, 5, 27, tzinfo=UTC),
+        clients=PerUserClients.for_tests(text=fake),
+    )
+
+    assert not fake.add_calls
+    with session_factory() as db:
+        items = {item.normalized_name: item for item in db.exec(select(PantryItem)).all()}
+        assert set(items) == {"chicken", "eggs"}
+        assert (items["chicken"].raw_name, items["chicken"].qty,
+                items["chicken"].unit, items["chicken"].shelf_life_days) == ("chicken", 2, "lb", 2)
+        assert (items["eggs"].raw_name, items["eggs"].qty,
+                items["eggs"].unit, items["eggs"].shelf_life_days) == ("eggs", 12, "each", 21)
+    assert [call.args[0] for call in msg.answer.await_args_list] == [
+        t("quota.degraded.add", lang, name="chicken", days=2),
+        t("quota.degraded.add", lang, name="eggs", days=21),
+    ]
+
+
+def test_basic_add_preserves_names_without_a_recognized_positive_measure():
+    assert parse_basic_add("7 Up, 0 lb rice, garlic") == [
+        BasicAddItem(name="7 Up"),
+        BasicAddItem(name="0 lb rice"),
+        BasicAddItem(name="garlic"),
+    ]
 
 
 @pytest.mark.asyncio
