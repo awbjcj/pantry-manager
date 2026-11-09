@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass
+from math import isfinite
 from typing import Literal, cast
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -22,6 +23,39 @@ from app.providers import ALL_PROVIDERS, Provider
 
 class CommandError(Exception):
     pass
+
+
+@dataclass(frozen=True)
+class BasicAddItem:
+    name: str
+    qty: float = 1.0
+    unit: str | None = None
+
+
+_BASIC_ADD_MEASURE = re.compile(
+    r"^(?P<qty>\d+(?:\.\d+)?)\s*(?P<unit>lb|lbs|oz|kg|g|ml|l|gal|ct)\s+(?P<name>\S.*)$",
+    re.IGNORECASE,
+)
+_BASIC_ADD_DOZEN = re.compile(r"^dozen\s+(?P<name>\S.*)$", re.IGNORECASE)
+
+
+def parse_basic_add(text: str) -> list[BasicAddItem]:
+    """Parse simple comma-separated names when LLM admission is unavailable."""
+    parts = [part.strip() for part in text.split(",") if part.strip()] or [text.strip()]
+    items: list[BasicAddItem] = []
+    for part in parts:
+        dozen = _BASIC_ADD_DOZEN.fullmatch(part)
+        measure = _BASIC_ADD_MEASURE.fullmatch(part)
+        if dozen:
+            items.append(BasicAddItem(name=dozen.group("name"), qty=12, unit="each"))
+        elif measure and isfinite(qty := float(measure.group("qty"))) and qty > 0:
+            unit = measure.group("unit").lower()
+            items.append(BasicAddItem(
+                name=measure.group("name"), qty=qty, unit="lb" if unit == "lbs" else unit,
+            ))
+        else:
+            items.append(BasicAddItem(name=part))
+    return items
 
 
 def parse_tz(arg: str) -> str:
