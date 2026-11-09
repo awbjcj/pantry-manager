@@ -13,9 +13,9 @@ were checked again on `dev`:
 - C13: the workflow is named for `master`; the required job check retains its
   existing name. C07 is addressed by correcting the historical PR title.
 - C06 remains addressed by the current two-child subscription layout; no new
-  visual acceptance test was run. C31's original parser was removed. When quota
-  is exhausted, the current intentionally simpler fallback treats the submitted
-  text as one item rather than parsing the documented multi-item example.
+  visual acceptance test was run. C31's original parser was removed. The basic
+  quota-exhausted `/add` fallback now recognizes the documented comma-separated
+  example, including a bare dozen and measured quantities, without an LLM call.
 
 Audited repository: `awbjcj/pantry-manager`. Code snapshot: `dev` at `ac1c175fd7e586543b1089c6c1e0186830d28141`. After fetching origin, local `HEAD` and `origin/dev` had zero divergence.
 
