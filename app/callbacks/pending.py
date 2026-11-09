@@ -16,10 +16,12 @@ from app.correction_service import (
 from app.i18n import t
 from app.models import PantryItem
 from app.pending_service import (
+    PendingNotPending,
     expire_for_item,
     load_pending,
     mark_applied,
     mark_cancelled,
+    mark_expired,
     utc_naive,
 )
 from app.renderer import (
@@ -30,6 +32,19 @@ from app.renderer import (
 )
 
 log = logging.getLogger(__name__)
+
+
+async def _transition_or_report(cb, *, session, pending, transition, lang: str) -> bool:
+    try:
+        transition(session, pending=pending)
+    except PendingNotPending as exc:
+        # Discard this worker's transaction, then report the state that won.
+        session.rollback()
+        terminal = str(exc)
+        await edit_or_resend(cb, render_terminal_state(terminal, lang=lang))
+        await cb.ack(t("toast.already_status", lang, status=terminal))
+        return False
+    return True
 
 
 async def _handle_pending_callback(
@@ -51,15 +66,20 @@ async def _handle_pending_callback(
     if pending.status != "pending" or pending.expires_at <= now:
         terminal = pending.status if pending.status != "pending" else "expired"
         if terminal == "expired" and pending.status == "pending":
-            pending.status = "expired"
-            session.add(pending)
+            if not await _transition_or_report(
+                cb, session=session, pending=pending, transition=mark_expired, lang=lang
+            ):
+                return
             session.commit()
         await edit_or_resend(cb, render_terminal_state(terminal, lang=lang))
         await cb.ack(t("toast.already_status", lang, status=terminal))
         return
 
     if verb == "cancel":
-        mark_cancelled(session, pending=pending)
+        if not await _transition_or_report(
+            cb, session=session, pending=pending, transition=mark_cancelled, lang=lang
+        ):
+            return
         session.commit()
         await edit_or_resend(cb, render_terminal_state("cancelled", lang=lang))
         await cb.ack(t("toast.cancelled", lang))
@@ -70,18 +90,28 @@ async def _handle_pending_callback(
         assert pending.item_id is not None
         item = session.get(PantryItem, pending.item_id)
         if item is None:
-            mark_cancelled(session, pending=pending)
+            if not await _transition_or_report(
+                cb, session=session, pending=pending, transition=mark_cancelled, lang=lang
+            ):
+                return
             session.commit()
             await edit_or_resend(cb, t("pending.item_gone_body", lang))
             await cb.ack(t("toast.item_gone", lang))
             return
         if item.status != "active":
-            mark_cancelled(session, pending=pending)
+            if not await _transition_or_report(
+                cb, session=session, pending=pending, transition=mark_cancelled, lang=lang
+            ):
+                return
             session.commit()
             await edit_or_resend(cb, t("pending.item_inactive_body", lang))
             await cb.ack(t("toast.item_inactive", lang))
             return
         assert item.id is not None
+        if not await _transition_or_report(
+            cb, session=session, pending=pending, transition=mark_applied, lang=lang
+        ):
+            return
         expire_for_item(
             session,
             household_id=household_id,
@@ -89,7 +119,6 @@ async def _handle_pending_callback(
             exclude_pending_id=pending.id,
         )
         apply_correct(session, household_id=household_id, item=item, payload=payload)
-        mark_applied(session, pending=pending)
         session.commit()
         await edit_or_resend(
             cb, render_applied_correction(item_id=item.id, payload=payload, lang=lang)
@@ -112,8 +141,11 @@ async def _handle_pending_callback(
         await cb.ack(t("toast.unknown_action", lang))
         return
     payload = add_payload_from_json(pending.proposed_json)
+    if not await _transition_or_report(
+        cb, session=session, pending=pending, transition=mark_applied, lang=lang
+    ):
+        return
     new_id = apply_add(session, household_id=household_id, payload=payload, today=today)
-    mark_applied(session, pending=pending)
     session.commit()
     await edit_or_resend(
         cb,
