@@ -142,12 +142,15 @@ uv run pytest tests/test_core_services.py::test_shelf_life_defaults
 
 ## Deploy to Railway
 
-1. Create or import the project in Railway, then connect the service source to
-   `awbjcj/pantry-manager` on the `master` branch with automatic deploys enabled.
-2. Add a persistent volume named `food-data` mounted at `/data`.
-3. Set Railway service variables matching `.env.example`.
-4. Push or merge to `master`. Railway builds and deploys the new revision
-   automatically; GitHub Actions runs the independent CI quality gates.
+The hosted project is described by [Railway IaC](.railway/README.md): it
+connects `awbjcj/pantry-manager` on `master`, mounts `food-data` at `/data`,
+and keeps existing variable values in Railway. Application commits on
+`master` deploy automatically; infrastructure changes require a separate
+reviewed Railway plan and apply. GitHub Actions runs independent CI checks.
+
+For another Railway project, adapt the project, service, repository and region
+in the IaC file and provide its required variables in Railway; the imported
+production configuration is not a turnkey template for a new installation.
 
 The container runs `bin/run.py` which backs up the database, runs Alembic migrations, registers per-user digest cron jobs, then starts long-polling.
 
