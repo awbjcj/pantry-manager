@@ -15,7 +15,8 @@ export default defineRailway(() => {
     healthcheck: "/healthz",
     healthcheckTimeout: 120,
     replicas: { "us-east4-eqdc4a": 1 },
-    deploy: { restartPolicyType: "ON_FAILURE", restartPolicyMaxRetries: 5 },
+    // Railway's default policy is ON_FAILURE; retain the deployed retry limit.
+    deploy: { restartPolicyMaxRetries: 5 },
     networking: { privateNetworkEndpoint: "food-manager" },
     volumeMounts: { "/data": foodData },
     // Values remain in Railway; only their names are managed here.
