@@ -6,6 +6,9 @@ GitHub-backed service, build and runtime settings, single replica, persistent
 managed by Railway. The file targets the existing production project and is not
 a generic template for a new deployment.
 
+The service uses Railway's default `ON_FAILURE` restart policy, with the
+existing five-retry limit declared in the IaC file.
+
 ## Review and apply
 
 Install Node.js 22 or later and Railway CLI 5.71.0 or later, authenticate, and
