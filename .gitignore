@@ -37,3 +37,7 @@ web/dist/
 web/*.tsbuildinfo
 web/test-results/
 web/playwright-report/
+
+# Railway IaC authoring dependencies and potentially sensitive plan artifacts
+.railway/node_modules/
+railway-plan*.json

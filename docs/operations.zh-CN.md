@@ -30,7 +30,8 @@
 
 `.github/workflows/ci.yml` 会在拉取请求、推送到 `master` 以及每周定时任务中运行。它会检查 Ruff、Pyright、空数据库上的 Alembic 升级、完整测试套件、Python 和 Docker 构建，以及锁定依赖的安全审计。
 
-该工作流仅负责 CI：Railway 直接连接 `master` 并负责每次部署。
+该工作流仅负责 CI：Railway 直接连接 `master` 并负责应用部署。
+Railway 基础设施通过 [Railway IaC](../.railway/README.md) 中的计划和应用流程单独管理；仅推送配置文件不会自动应用基础设施变更。
 
 保护 `master` 分支，并要求合并前通过 `Quality gates`、`Build artifacts` 和 `Dependency audit` 检查。这样可避免 Railway 自动部署尚未通过 CI 的合并版本。不要把 Railway、AI 提供商或 Telegram 的生产凭据放入 GitHub Actions；这些凭据应保存在 Railway 服务变量中。
 

@@ -97,10 +97,15 @@ uv run pytest tests/test_core_services.py::test_shelf_life_defaults
 
 ## 部署到 Railway
 
-1. 在 Railway 中创建或导入项目，然后把服务源连接到 `awbjcj/pantry-manager` 仓库的 `master` 分支，并启用自动部署。
-2. 添加名为 `food-data` 的持久卷，并挂载到 `/data`。
-3. 设置与 `.env.example` 对应的 Railway 服务变量。
-4. 推送或合并到 `master`。Railway 会自动构建并部署新版本；GitHub Actions 会独立运行 CI 质量门禁。
+托管项目由 [Railway IaC](.railway/README.md) 描述：服务连接
+`awbjcj/pantry-manager` 的 `master` 分支，并将持久卷 `food-data`
+挂载到 `/data`；现有变量值保留在 Railway 中。`master` 上的应用
+提交会自动部署，基础设施变更则需要单独审查并应用 Railway 计划。
+GitHub Actions 独立运行 CI 检查。
+
+如需部署到其他 Railway 项目，请先调整 IaC 文件中的项目、服务、
+仓库和区域，并在 Railway 中设置所需变量；导入的生产配置不能
+直接作为新安装的模板。
 
 容器运行 `bin/run.py`：先备份数据库、执行 Alembic 迁移、注册每位用户的摘要定时任务，然后启动长轮询。
 

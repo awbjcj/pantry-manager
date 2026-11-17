@@ -57,7 +57,9 @@ manual dispatch, and the historical tag backfill.
 weekly schedule. It enforces Ruff, Pyright, an empty-database Alembic upgrade,
 the full test suite, Python and Docker builds, and a locked-dependency audit.
 It is CI-only: Railway is connected directly to `master` and handles every
-deployment.
+application deployment. Railway infrastructure is managed separately through
+the reviewed plan/apply workflow in [Railway IaC](../.railway/README.md);
+pushing the authoring file alone does not apply infrastructure changes.
 
 Protect `master` and require the `Quality gates`, `Build artifacts`, and
 `Dependency audit` checks before merge. That prevents Railway's automatic
