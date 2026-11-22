@@ -47,3 +47,25 @@ jobs:
 
       - name: Run tests
         run: uv run pytest -q --durations=15
+
+  container:
+    name: Container build & migration
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build production container
+        run: docker build --tag pantry-manager:ci .
+
+      - name: Verify migrations in the container
+        run: >-
+          docker run --rm
+          -e DATABASE_PATH=/tmp/migration-smoke.db
+          -e TELEGRAM_BOT_TOKEN
+          -e ALLOWED_TELEGRAM_USER_ID
+          -e ANTHROPIC_API_KEY
+          pantry-manager:ci uv run --no-sync alembic upgrade head
