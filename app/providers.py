@@ -17,6 +17,7 @@ without an import cycle.
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass
 from typing import Literal, TypeVar
 
@@ -76,6 +77,18 @@ class ProviderCredentials:
     mode: CredentialMode
     api_key: str
     base_url: str | None = None
+
+
+def gemini_http_options(base_url: str | None) -> dict[str, str]:
+    """Keep Gemini's v1beta routes across SDK versions and gateway clients."""
+    options: dict[str, str] = {}
+    if base_url:
+        options["base_url"] = base_url
+    # The gateway exposes only v1beta. Direct clients preserve the old default,
+    # while allowing an explicitly configured SDK API version to take effect.
+    if base_url or not os.getenv("GOOGLE_GENAI_API_VERSION"):
+        options["api_version"] = "v1beta"
+    return options
 
 
 class LLMProviderNotConfigured(ValueError):
