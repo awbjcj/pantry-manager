@@ -20,7 +20,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.model_policy import resolve_model_id
-from app.providers import ProviderCredentials
+from app.providers import ProviderCredentials, gemini_http_options
 
 
 def build_agno_model(*, model_id: str, credentials: ProviderCredentials) -> Any:
@@ -48,9 +48,7 @@ def build_agno_model(*, model_id: str, credentials: ProviderCredentials) -> Any:
         return Gemini(
             id=model_id,
             api_key=api_key,
-            client_params={"http_options": {"base_url": base_url}}
-            if base_url
-            else None,
+            client_params={"http_options": gemini_http_options(base_url)},
         )
     if provider == "deepseek":
         from agno.models.deepseek import DeepSeek
