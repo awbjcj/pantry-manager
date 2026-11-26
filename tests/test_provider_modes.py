@@ -411,6 +411,62 @@ def test_build_llm_clients_drops_a_provider_lacking_that_modes_credentials():
     assert bundle.text.available_providers == ("gemini",)
 
 
+@pytest.mark.parametrize(
+    ("gateway", "configured_version", "expected_version"),
+    [(False, None, "v1beta"), (True, None, "v1beta"),
+     (False, "v1", "v1"), (True, "v1", "v1beta")],
+)
+async def test_gemini_client_sends_requests_to_the_expected_api_version(
+    monkeypatch, gateway, configured_version, expected_version
+):
+    import httpx2
+    from google import genai
+
+    from bin.run import _build_llm_clients
+
+    if configured_version:
+        monkeypatch.setenv("GOOGLE_GENAI_API_VERSION", configured_version)
+    else:
+        monkeypatch.delenv("GOOGLE_GENAI_API_VERSION", raising=False)
+    requests = []
+
+    def respond(request):
+        requests.append(request)
+        return httpx2.Response(200, json={
+            "candidates": [{"content": {"role": "model", "parts": [{"text": "ok"}]}}],
+        })
+
+    real_client = genai.Client
+    async with httpx2.AsyncClient(transport=httpx2.MockTransport(respond)) as http:
+        def client_with_transport(*args, **kwargs):
+            options = kwargs.get("http_options")
+            options = dict(options) if options else {}
+            options["httpx_async_client"] = http
+            kwargs["http_options"] = options
+            return real_client(*args, **kwargs)
+
+        monkeypatch.setattr(genai, "Client", client_with_transport)
+        settings = _settings(
+            LLM_PROVIDER="gemini",
+            GEMINI_API_KEY="g-key",
+            SUB2API_BASE_URL=GATEWAY if gateway else None,
+            SUB2API_GEMINI_TOKEN="sub-g" if gateway else None,
+        )
+        bundle = _build_llm_clients(
+            settings, {"gemini": "subscription" if gateway else "api"}
+        )
+        sdk = cast(Any, bundle.text.for_provider("gemini"))._caller._client
+        try:
+            await sdk.aio.models.generate_content(model="gemini-3.8-flash", contents="hello")
+        finally:
+            await sdk.aio.aclose()
+            sdk.close()
+
+    assert len(requests) == 1
+    assert requests[0].url.host == ("gw.example" if gateway else "generativelanguage.googleapis.com")
+    assert requests[0].url.path == f"/{expected_version}/models/gemini-3.8-flash:generateContent"
+
+
 def test_adopting_a_rebuilt_bundle_repoints_the_live_selectors():
     from bin.run import _adopt_bundle, _build_llm_clients
 

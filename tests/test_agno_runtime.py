@@ -162,8 +162,9 @@ async def _run(wrapper, seam, food="yogurt"):
 @pytest.mark.parametrize("seam", ["intent", "composer"])
 @pytest.mark.parametrize("base_url", [None, "https://gateway.example/v1"])
 async def test_real_agents_round_trip_structured_output(
-    provider, model_id, host, seam, base_url
+    provider, model_id, host, seam, base_url, monkeypatch
 ):
+    monkeypatch.delenv("GOOGLE_GENAI_API_VERSION", raising=False)
     async with _agent(seam, provider, model_id, base_url) as (wrapper, requests):
         result = await _run(wrapper, seam)
     expected = _expected(seam)
@@ -182,8 +183,22 @@ async def test_real_agents_round_trip_structured_output(
         assert payload["output_config"]["format"]["type"] == "json_schema"
         assert "output_format" not in payload
     else:
+        assert "/v1beta/models/" in requests[0].url.path
         assert payload["generationConfig"]["responseMimeType"] == "application/json"
         assert "properties" in payload["generationConfig"]["responseSchema"]
+
+
+@pytest.mark.parametrize("seam", ["intent", "composer"])
+@pytest.mark.parametrize(
+    ("base_url", "expected_version"),
+    [(None, "v1"), ("https://gateway.example", "v1beta")],
+)
+async def test_gemini_agent_api_version_respects_gateway(seam, base_url, expected_version, monkeypatch):
+    monkeypatch.setenv("GOOGLE_GENAI_API_VERSION", "v1")
+    async with _agent(seam, "gemini", "gemini-3.8-flash", base_url) as (wrapper, requests):
+        await _run(wrapper, seam)
+    assert len(requests) == 1
+    assert requests[0].url.path == f"/{expected_version}/models/gemini-3.8-flash:generateContent"
 
 
 @pytest.mark.parametrize(("provider", "model_id", "_host"), PROVIDERS)

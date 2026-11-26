@@ -90,7 +90,12 @@ from app.nl_intent import IntentAgentSelector, build_intent_agent
 from app.operator import auth as operator_auth
 from app.operator.bot import build_operator_dispatcher
 from app.provider_mode_service import ProviderModeAdmin, effective_modes
-from app.providers import ALL_PROVIDERS, CredentialMode, ProviderCredentials
+from app.providers import (
+    ALL_PROVIDERS,
+    CredentialMode,
+    ProviderCredentials,
+    gemini_http_options,
+)
 from app.refine_service import AnthropicSearchClient
 from app.resilience import run_with_restart
 from app.scheduler import (
@@ -307,17 +312,10 @@ def _build_llm_clients(settings: Settings, modes: ModeMap | None = None) -> LLMB
     gemini_credentials = credentials.get("gemini")
     if gemini_credentials:
         from google import genai
-        from google.genai import types as genai_types
 
         gemini_sdk = genai.Client(
             api_key=gemini_credentials.api_key,
-            # genai nests the endpoint under http_options; leaving it unset is
-            # what selects Google's own API, so only build it in gateway mode.
-            http_options=(
-                genai_types.HttpOptions(base_url=gemini_credentials.base_url)
-                if gemini_credentials.base_url
-                else None
-            ),
+            http_options=gemini_http_options(gemini_credentials.base_url),
         )
         image_clients["gemini"] = GeminiLLMClient(gemini_sdk, settings.gemini_model)
         text_clients["gemini"] = GeminiTextLLMClient(
