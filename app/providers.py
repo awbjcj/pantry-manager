@@ -19,7 +19,10 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass
-from typing import Literal, TypeVar
+from typing import TYPE_CHECKING, Literal, TypeVar
+
+if TYPE_CHECKING:
+    from google.genai.types import HttpOptionsDict
 
 log = logging.getLogger(__name__)
 
@@ -79,9 +82,9 @@ class ProviderCredentials:
     base_url: str | None = None
 
 
-def gemini_http_options(base_url: str | None) -> dict[str, str]:
+def gemini_http_options(base_url: str | None) -> HttpOptionsDict:
     """Keep Gemini's v1beta routes across SDK versions and gateway clients."""
-    options: dict[str, str] = {}
+    options: HttpOptionsDict = {}
     if base_url:
         options["base_url"] = base_url
     # The gateway exposes only v1beta. Direct clients preserve the old default,
