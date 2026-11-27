@@ -177,10 +177,10 @@ GitHub Actions 独立运行 CI 检查。
 | `ANTHROPIC_SEARCH_MODEL` | 否 | `claude-sonnet-5-5` | 用于保存期网络搜索的 Claude 模型——**需要在 Anthropic 工作区启用网络搜索** |
 | `OPENAI_API_KEY` | 使用 OpenAI 时 | — | OpenAI API 密钥 |
 | `OPENAI_MODEL` | 否 | `gpt-6.1-terra` | 用于解析收据、菜谱及搜索的 OpenAI 模型 |
-| `OPENAI_TEXT_MODEL` | 否 | `gpt-6.1-terra` | 用于 `/correct` 和 `/add` 提案的 OpenAI 模型 |
+| `OPENAI_TEXT_MODEL` | 否 | `gpt-6-luna` | 用于 `/correct` 和 `/add` 提案的 OpenAI 模型 |
 | `GEMINI_API_KEY` | 使用 Gemini 时 | — | Google Gemini API 密钥（原生 `google-genai` SDK） |
-| `GEMINI_MODEL` | 否 | `gemini-3.8-flash` | 用于解析收据的 Gemini 模型 |
-| `GEMINI_TEXT_MODEL` | 否 | `gemini-3.8-flash` | 用于 `/correct` 和 `/add` 提案的 Gemini 模型 |
+| `GEMINI_MODEL` | 否 | `gemini-4-hydrogen` | 用于解析收据的 Gemini 模型 |
+| `GEMINI_TEXT_MODEL` | 否 | `gemini-3.5-flash-lite` | 用于 `/correct` 和 `/add` 提案的 Gemini 模型 |
 | `DEEPSEEK_API_KEY` | 使用 DeepSeek 时 | — | DeepSeek API 密钥。DeepSeek 仍无法读取小票照片，但现在支持原生网络搜索 |
 | `DEEPSEEK_MODEL` | 否 | `deepseek-v4-pro` | 用于文本和搜索任务的 DeepSeek 模型 |
 | `DEEPSEEK_BASE_URL` | 否 | `https://api.deepseek.com` | DeepSeek API 根 URL（兼容 OpenAI） |
@@ -196,46 +196,37 @@ GitHub Actions 独立运行 CI 检查。
 | `LOG_LEVEL` | 否 | `INFO` | 日志级别 |
 | `ENV` | 否 | `dev` | 设置为 `prod` 时使用 JSON 结构化日志 |
 
-当前默认模型及供应商标准 API 价格（美元／百万 token；OpenAI、Claude 核对于
-2026 年 10 月 28 日，Gemini 核对于 9 月 22 日）：
+截至 2026 年 11 月 27 日的默认模型与标准 API 价格（美元／百万 token）。
 
 | 模型 | 用途 | 输入 | 输出 |
 | --- | --- | ---: | ---: |
-| `claude-sonnet-5-5` | Claude 收据、菜谱及搜索（默认） | $2.00 | $10.00 |
+| `claude-sonnet-5-5` | Claude 收据、菜谱和搜索默认模型 | $2.00 | $10.00 |
+| `claude-haiku-5-5` | Claude 文本默认模型（输入不超过 100K token） | $0.10 | $0.50 |
+| `claude-haiku-5-5` | Claude 文本（输入超过 100K token） | $0.50 | $2.50 |
 | `claude-opus-5-5` | 可选 Claude 模型 | $4.00 | $20.00 |
-| `claude-haiku-5-5` | Claude 文本任务（输入不超过 100K token） | $0.10 | $0.50 |
-| `claude-haiku-5-5` | Claude 文本任务（输入超过 100K token） | $0.50 | $2.50 |
-| `gpt-6.1-terra` | 所有 OpenAI 任务，包括文本任务 | $1.00 | $5.00 |
-| `gpt-6.1-sol` | 可选 OpenAI 模型 | $2.00 | $10.00 |
-| `gemini-3.8-flash` | Gemini 收据、菜谱、搜索及文本 | $0.75 | $3.75 |
+| `claude-fable-5-2` | 可选 Claude 模型 | $8.00 | $40.00 |
+| `gpt-6.1-terra` | OpenAI 收据、菜谱和搜索默认模型 | $1.00 | $5.00 |
+| `gpt-6-luna` | OpenAI 文本默认模型 | $0.10 | $0.50 |
+| `gpt-6.2-sol` | 可选 OpenAI 模型 | $2.00 | $10.00 |
+| `gpt-6.2-astra` | 可选 OpenAI 模型 | $8.00 | $40.00 |
+| `gemini-4-hydrogen` | Gemini 收据、菜谱和搜索默认模型 | $1.50 | $7.50 |
+| `gemini-3.5-flash-lite` | Gemini 文本默认模型 | $0.30 | $2.50 |
+| `gemini-4-neon` | 可选 Gemini 模型 | $3.00 | $15.00 |
+| `gemini-4-argon`, `gemini-4-carbon` | 可选 Gemini 模型 | $4.00 | $20.00 |
+| `gemini-3.6-flash`, `gemini-3.8-flash` | 可选 Gemini 模型 | $1.50 | $7.50 |
 
-以上是普通输入和输出价格。GPT-6 的价格适用于不超过 272K 输入 token
-的请求，更长的输入价格更高。Gemini 3.8 Flash 优惠价截至 2026 年 12 月
-31 日；缓存和搜索费用另计。来源：[OpenAI 价格](https://developers.openai.com/api/docs/pricing)、
-[Claude 价格](https://platform.claude.com/docs/en/about-claude/pricing)、
-[Gemini 价格](https://ai.google.dev/gemini-api/docs/pricing)。
+表中为常规价格，缓存折扣和搜索费用另计。Gemini 4 Argon 和 Carbon 的优惠价格
+为 $2/$10，截至 2026 年 11 月 30 日；Gemini 3.6 和 3.8 Flash 的优惠价格为 $0.75/$3.75，
+截至 2026 年 12 月 31 日。OpenAI 输入超过 272K token 时，整个请求按长上下文价格计费。
+参阅 [OpenAI 价格](https://developers.openai.com/api/docs/pricing)、
+[Claude 价格](https://platform.claude.com/docs/en/about-claude/pricing)和
+[Gemini 价格](https://aistudio.google.com/docs/pricing)。
 
-GPT-6.1 Terra 的模型接口和标准价格核对于 2026 年 10 月 28 日。
-OpenAI 主模型请求使用 Responses API，设置 `reasoning={"effort": "low"}`，
-总输出上限为 8,192 token（包括推理），不发送采样参数。
-Terra 费用估算按返回的用量区分缓存读取（$0.05／百万 token）、30 分钟写入
-（$1.25）和 12 小时写入（$2.50）；输入超过 272K token 时，整个请求的输入和缓存
-价格翻倍，输出为 $7.50／百万 token。缺少缓存明细时，按普通输入估算。
-这些官方 API 价格估算不代表网关账单或已验证的线上模型访问。参阅
-[Terra 模型文档](https://developers.openai.com/api/docs/models/gpt-6.1-terra)。
-
-Claude 收据解析、菜谱和搜索默认使用 Sonnet 5.5。若要选择可选的 Opus 5.5，可将
-`ANTHROPIC_MODEL` 和／或 `ANTHROPIC_SEARCH_MODEL` 设置为 `claude-opus-5-5`。
-文本任务仍默认使用 Haiku 5.5。
-
-`OPENAI_MODEL` 和 `OPENAI_TEXT_MODEL` 现在都默认使用 Terra；也可显式选择 Sol，
-其标准 token 和缓存价格均为 Terra 的两倍。应用启动时会将已知的旧 OpenAI、Claude
-环境变量值转换为新模型，Agno agent 也使用同一规则。例如，旧 Luna ID 转为 Terra，
-旧 Claude Sonnet、Haiku、Opus ID 转为对应的 5.5 模型。完整对应关系见
-[模型替换表](app/model_policy.py)。自定义网关模型 ID 仍可配置，历史用量、费用及
-带日期的设计记录保持原样。这是本应用的模型退役策略，不代表供应商已关闭旧模型。
-Opus、Sonnet 5.5 的收据解析使用自动工具选择，也接受并校验 JSON 文本响应，遵循
-[Claude 工具选择规则](https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools)。
+通过相应的环境变量可更换模型。应用启动及构建 Agno agent 时会替换已知旧模型 ID。
+具体对应关系见[模型替换表](app/model_policy.py)。使用 Sub2API 时，请为两个模型变量
+填写网关分组支持的 ID。例如分组使用 Gemini 3.8 Flash 时，可将 `GEMINI_MODEL` 和
+`GEMINI_TEXT_MODEL` 均设为 `gemini-3.8-flash`。自定义网关模型 ID 仍可配置，
+历史用量和费用记录保持原样。
 
 Stars 订阅每 30 天续费一次。家庭所有者可以在 Mini App 中取消续费；加量包会在当前额度周期结束时失效。完整的购买、验证、加量和取消流程请参阅 [`docs/telegram-subscriptions.zh-CN.md`](docs/telegram-subscriptions.zh-CN.md)。
 

@@ -21,12 +21,15 @@ from app.providers import ProviderCredentials
 from app.week_composer import DaySpec, WeekPlanSpec, build_week_composer
 
 PROVIDERS = [
+    ("anthropic", "claude-fable-5-2", "api.anthropic.com"),
     ("anthropic", "claude-haiku-5-5", "api.anthropic.com"),
     ("anthropic", "claude-opus-5-5", "api.anthropic.com"),
     ("anthropic", "claude-sonnet-5-5", "api.anthropic.com"),
     ("openai", "gpt-6.1-terra", "api.openai.com"),
-    ("openai", "gpt-6.1-sol", "api.openai.com"),
-    ("gemini", "gemini-3.8-flash", "generativelanguage.googleapis.com"),
+    ("openai", "gpt-6.2-sol", "api.openai.com"),
+    ("openai", "gpt-6.2-astra", "api.openai.com"),
+    ("openai", "gpt-6-luna", "api.openai.com"),
+    ("gemini", "gemini-4-hydrogen", "generativelanguage.googleapis.com"),
     ("deepseek", "deepseek-v4-pro", "api.deepseek.com"),
 ]
 TODAY = date(2026, 10, 15)
@@ -195,10 +198,10 @@ async def test_real_agents_round_trip_structured_output(
 )
 async def test_gemini_agent_api_version_respects_gateway(seam, base_url, expected_version, monkeypatch):
     monkeypatch.setenv("GOOGLE_GENAI_API_VERSION", "v1")
-    async with _agent(seam, "gemini", "gemini-3.8-flash", base_url) as (wrapper, requests):
+    async with _agent(seam, "gemini", "gemini-4-hydrogen", base_url) as (wrapper, requests):
         await _run(wrapper, seam)
     assert len(requests) == 1
-    assert requests[0].url.path == f"/{expected_version}/models/gemini-3.8-flash:generateContent"
+    assert requests[0].url.path == f"/{expected_version}/models/gemini-4-hydrogen:generateContent"
 
 
 @pytest.mark.parametrize(("provider", "model_id", "_host"), PROVIDERS)

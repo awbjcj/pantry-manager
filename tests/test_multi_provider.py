@@ -7,6 +7,7 @@ schema-repair pass through the new Gemini and DeepSeek clients with faked SDKs.
 
 from __future__ import annotations
 
+from datetime import date
 from types import SimpleNamespace
 
 import pytest
@@ -388,7 +389,7 @@ def _gemini_response(
 
 async def test_gemini_selection_structured_from_text():
     client = FakeGenAIClient([_gemini_response('{"item_ids":[3],"rationale":"r"}')])
-    selected, cost = await GeminiSelectionLLM(client, "gemini-2.5-flash").select_items(
+    selected, cost = await GeminiSelectionLLM(client, "gemini-3.5-flash-lite").select_items(
         prompt="x"
     )
     assert selected.item_ids == [3]
@@ -401,22 +402,22 @@ async def test_gemini_selection_structured_from_text():
 
 async def test_gemini_image_extract():
     client = FakeGenAIClient([_gemini_response('{"items":[]}')])
-    result = await GeminiLLMClient(client, "gemini-2.5-flash").extract_items_from_image(
+    result = await GeminiLLMClient(client, "gemini-3.5-flash-lite").extract_items_from_image(
         b"\x89PNG\r\n\x1a\n", image_media_type="image/png"
     )
     assert result.parse.items == []
     assert result.cost_micros_usd == round(10 * 0.3 + 4 * 2.5)
 
 
-async def test_gemini_37_cost_includes_thinking_tokens():
+async def test_gemini_4_cost_includes_thinking_tokens():
     client = FakeGenAIClient(
         [_gemini_response('{"items":[]}', thought_tokens=6)]
     )
-    result = await GeminiLLMClient(client, "gemini-3.7-flash").extract_items_from_image(
+    result = await GeminiLLMClient(client, "gemini-4-hydrogen").extract_items_from_image(
         b"\x89PNG\r\n\x1a\n", image_media_type="image/png"
     )
 
-    assert result.cost_micros_usd == round(10 * 0.75 + (4 + 6) * 3.75)
+    assert result.cost_micros_usd == round(10 * 1.50 + (4 + 6) * 7.50)
     assert result.provider_usage == {
         "prompt_token_count": 10,
         "candidates_token_count": 4,
@@ -425,13 +426,30 @@ async def test_gemini_37_cost_includes_thinking_tokens():
     }
 
 
-async def test_gemini_38_has_current_cost_rate():
+@pytest.mark.parametrize(
+    "model,today,expected",
+    [
+        ("gemini-3.8-flash", date(2026, 12, 31), 22),
+        ("gemini-3.8-flash", date(2027, 1, 1), 45),
+        ("gemini-4-carbon", date(2026, 11, 30), 60),
+        ("gemini-4-argon", date(2026, 12, 1), 120),
+        ("gemini-4-neon", date(2026, 12, 1), 90),
+    ],
+)
+def test_gemini_cost_tracks_published_rate_changes(model, today, expected):
+    from app.gemini_llm import _gemini_cost
+
+    assert _gemini_cost(_gemini_response('{"items":[]}'), model, today=today) == expected
+
+
+async def test_gemini_4_hydrogen_receipt_uses_structured_output():
     client = FakeGenAIClient([_gemini_response('{"items":[]}')])
-    result = await GeminiLLMClient(client, "gemini-3.8-flash").extract_items_from_image(
+    result = await GeminiLLMClient(client, "gemini-4-hydrogen").extract_items_from_image(
         b"\x89PNG\r\n\x1a\n", image_media_type="image/png"
     )
 
-    assert result.cost_micros_usd == round(10 * 0.75 + 4 * 3.75)
+    assert result.parse.items == []
+    assert client.aio.models.calls[0]["config"].response_schema is ParseResult
 
 
 @pytest.mark.parametrize("model_cls", [ParseResult, ProposedAddItems])
@@ -450,7 +468,7 @@ async def test_gemini_search_uses_grounding_and_parses_json():
     client = FakeGenAIClient(
         [_gemini_response('Here you go: {"days": 5, "confidence": 0.9}')]
     )
-    res = await GeminiSearchClient(client, "gemini-2.5-flash").lookup_shelf_life(
+    res = await GeminiSearchClient(client, "gemini-3.5-flash-lite").lookup_shelf_life(
         name="milk", category="dairy"
     )
     assert res.days == 5 and res.confidence == 0.9
@@ -460,7 +478,7 @@ async def test_gemini_search_uses_grounding_and_parses_json():
     assert cfg.response_schema is None
 
 
-async def test_gemini_search_adds_grounding_query_fee_for_v3_model():
+async def test_gemini_search_adds_grounding_query_fee_for_gemini_4():
     response = _gemini_response('{"days": 5, "confidence": 0.9}')
     response.candidates = [
         SimpleNamespace(
@@ -468,11 +486,11 @@ async def test_gemini_search_adds_grounding_query_fee_for_v3_model():
         )
     ]
     client = FakeGenAIClient([response])
-    res = await GeminiSearchClient(client, "gemini-3.1-pro-preview").lookup_shelf_life(
+    res = await GeminiSearchClient(client, "gemini-4-hydrogen").lookup_shelf_life(
         name="milk", category="dairy"
     )
-    # tokens: 10*2.0 + 4*12.0 = 68; grounding: 1 non-empty query * $14/1000 = 14_000
-    assert res.cost_micros_usd == 68 + 14_000
+    # tokens: 10*1.50 + 4*7.50 = 45; grounding: 1 non-empty query * $14/1000 = 14_000
+    assert res.cost_micros_usd == 45 + 14_000
 
 
 async def test_gemini_search_adds_grounding_prompt_fee_for_legacy_model():
@@ -488,5 +506,8 @@ async def test_gemini_search_adds_grounding_prompt_fee_for_legacy_model():
     res = await GeminiSearchClient(client, "gemini-2.5-flash").lookup_shelf_life(
         name="milk", category="dairy"
     )
-    # tokens: 10*0.3 + 4*2.5 = 13; grounding: billed per PROMPT (not per query) = $35/1000
-    assert res.cost_micros_usd == 13 + 35_000
+    from app.gemini_llm import _gemini_search_cost_micros
+
+    assert _gemini_search_cost_micros(response, "gemini-2.5-flash-lite") == 35_000
+    # Retired models have no active token estimate.
+    assert res.cost_micros_usd is None

@@ -252,10 +252,10 @@ inventing those facts. The new history starts after migration `0023_pantry_outco
 | `ANTHROPIC_SEARCH_MODEL`   | No                   | `claude-sonnet-5-5`         | Claude model used for shelf-life web search — **requires web search enabled on the Anthropic workspace**                                                                                     |
 | `OPENAI_API_KEY`           | When using openai    | —                           | OpenAI API key                                                                                                                                                                               |
 | `OPENAI_MODEL`             | No                   | `gpt-6.1-terra`             | OpenAI model to use for receipt parsing, cook, and search                                                                                                                                     |
-| `OPENAI_TEXT_MODEL`        | No                   | `gpt-6.1-terra`                | OpenAI model to use for `/correct` and `/add` proposals                                                                                                                                      |
+| `OPENAI_TEXT_MODEL`        | No                   | `gpt-6-luna`                | OpenAI model to use for `/correct` and `/add` proposals                                                                                                                                      |
 | `GEMINI_API_KEY`           | When using gemini    | —                           | Google Gemini API key (native `google-genai` SDK)                                                                                                                                            |
-| `GEMINI_MODEL`             | No                   | `gemini-3.8-flash`          | Gemini model to use for receipt parsing                                                                                                                                                      |
-| `GEMINI_TEXT_MODEL`        | No                   | `gemini-3.8-flash`          | Gemini model to use for `/correct` and `/add` proposals                                                                                                                                      |
+| `GEMINI_MODEL`             | No                   | `gemini-4-hydrogen`          | Gemini model to use for receipt parsing                                                                                                                                                      |
+| `GEMINI_TEXT_MODEL`        | No                   | `gemini-3.5-flash-lite`          | Gemini model to use for `/correct` and `/add` proposals                                                                                                                                      |
 | `DEEPSEEK_API_KEY`         | When using deepseek  | —                           | DeepSeek API key for text and standalone web search; receipt photos use another provider                                                                                                    |
 | `DEEPSEEK_MODEL`           | No                   | `deepseek-v4-pro`           | DeepSeek model for text and search tasks: V4 Pro (`deepseek-v4-pro`) or V4.1 Flash (`deepseek-flash`)                                                                            |
 | `DEEPSEEK_BASE_URL`        | No                   | `https://api.deepseek.com`  | DeepSeek API base URL (OpenAI-compatible)                                                                                                                                                    |
@@ -271,54 +271,41 @@ inventing those facts. The new history starts after migration `0023_pantry_outco
 | `LOG_LEVEL`                | No                   | `INFO`                      | Logging level                                                                                                                                                                                |
 | `ENV`                      | No                   | `dev`                       | Set to `prod` for JSON-structured logs                                                                                                                                                       |
 
-The current model defaults and first-party Standard API token prices (USD per
-million tokens; OpenAI/Claude checked October 28, 2026, Gemini September 22) are:
+Model defaults and Standard API token prices, in USD per million tokens,
+as of November 27, 2026.
 
 | Model | Use | Input | Output |
 | --- | --- | ---: | ---: |
-| `claude-sonnet-5-5` | Claude receipt, cook, and search (default) | $2.00 | $10.00 |
-| `claude-opus-5-5` | Optional Claude override | $4.00 | $20.00 |
-| `claude-haiku-5-5` | Claude text tasks (up to 100K input tokens) | $0.10 | $0.50 |
-| `claude-haiku-5-5` | Claude text tasks (over 100K input tokens) | $0.50 | $2.50 |
-| `gpt-6.1-terra` | All OpenAI tasks, including text | $1.00 | $5.00 |
-| `gpt-6.1-sol` | Optional OpenAI override | $2.00 | $10.00 |
-| `gemini-3.8-flash` | Gemini receipt, cook, search, and text | $0.75 | $3.75 |
+| `claude-sonnet-5-5` | Default for Claude receipts, recipes, and search | $2.00 | $10.00 |
+| `claude-haiku-5-5` | Default for Claude text (up to 100K input tokens) | $0.10 | $0.50 |
+| `claude-haiku-5-5` | Claude text (over 100K input tokens) | $0.50 | $2.50 |
+| `claude-opus-5-5` | Claude override | $4.00 | $20.00 |
+| `claude-fable-5-2` | Claude override | $8.00 | $40.00 |
+| `gpt-6.1-terra` | Default for OpenAI receipts, recipes, and search | $1.00 | $5.00 |
+| `gpt-6-luna` | Default for OpenAI text | $0.10 | $0.50 |
+| `gpt-6.2-sol` | OpenAI override | $2.00 | $10.00 |
+| `gpt-6.2-astra` | OpenAI override | $8.00 | $40.00 |
+| `gemini-4-hydrogen` | Default for Gemini receipts, recipes, and search | $1.50 | $7.50 |
+| `gemini-3.5-flash-lite` | Default for Gemini text | $0.30 | $2.50 |
+| `gemini-4-neon` | Gemini override | $3.00 | $15.00 |
+| `gemini-4-argon`, `gemini-4-carbon` | Gemini overrides | $4.00 | $20.00 |
+| `gemini-3.6-flash`, `gemini-3.8-flash` | Gemini overrides | $1.50 | $7.50 |
 
-These are ordinary input and output rates. GPT-6 rates above apply up to 272K
-input tokens; longer prompts have higher rates. Gemini 3.8 Flash has introductory
-rates through December 31, 2026. Haiku 5.5 rates were checked October 28, 2026;
-its 100K threshold includes cached input and changes the rates for the entire
-request. Text calls retain its default adaptive thinking at medium effort,
-with an 8,192-token output ceiling for thinking and visible output. Cache and
-search charges are separate. See
-[OpenAI pricing](https://developers.openai.com/api/docs/pricing),
+The table shows regular token rates before cache discounts or search fees.
+Gemini 4 Argon and Carbon cost $2/$10 through November 30, 2026.
+Gemini 3.6 and 3.8 Flash cost $0.75/$3.75 through December 31, 2026.
+OpenAI prompts above 272K input tokens use the long-context rates for the full
+request. See [OpenAI pricing](https://developers.openai.com/api/docs/pricing),
 [Claude pricing](https://platform.claude.com/docs/en/about-claude/pricing), and
-[Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing).
+[Gemini pricing](https://aistudio.google.com/docs/pricing).
 
-GPT-6.1 Terra's model contract and Standard prices were checked October 28, 2026.
-Main-model OpenAI calls use Responses with `reasoning={"effort": "low"}` and an 8,192-token
-total output ceiling, including reasoning. Sampling controls are omitted.
-Terra estimates account for reported cache reads ($0.05/M), 30-minute writes
-($1.25/M), and 12-hour writes ($2.50/M); above 272K input tokens, input/cache
-rates double and output costs $7.50/M for the full request. Missing cache details
-use ordinary-input estimates. These first-party estimates do not establish
-gateway billing or live model access. See the
-[Terra model page](https://developers.openai.com/api/docs/models/gpt-6.1-terra).
-
-Claude defaults to Sonnet 5.5 for receipt parsing, cooking, and search. Opus 5.5
-is optional: set `ANTHROPIC_MODEL` and/or `ANTHROPIC_SEARCH_MODEL` to
-`claude-opus-5-5` to select it. Haiku 5.5 remains the default for text tasks.
-
-Both `OPENAI_MODEL` and `OPENAI_TEXT_MODEL` now default to Terra. Sol is an
-explicit override with twice Terra's Standard token/cache rates. Known older
-OpenAI and Claude environment values are upgraded by the application at startup;
-the same policy applies when building Agno agents. For example, old Luna IDs map
-to Terra, and older Claude Sonnet/Haiku/Opus IDs map to the corresponding 5.5
-model. See [the replacement map](app/model_policy.py). Custom gateway model IDs
-remain configurable. Stored usage/cost history and dated design records are
-preserved. This is an application retirement policy, not a vendor shutdown claim.
-Opus and Sonnet 5.5 receipt parsing uses automatic tool selection and also accepts
-validated JSON text, following [Claude's tool-choice contract](https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools).
+Set the corresponding model environment variable to select an override.
+Food Manager remaps known older model IDs at startup and when building Agno
+agents. See [the replacement map](app/model_policy.py). For Sub2API, set
+both model variables to IDs your group actually serves. For example, if
+your Gemini group still serves 3.8 Flash, set both `GEMINI_MODEL` and
+`GEMINI_TEXT_MODEL` to `gemini-3.8-flash`. Custom gateway model IDs remain
+configurable. Historical usage and cost records are preserved.
 
 DeepSeek pricing (checked October 18, 2026, USD per million tokens):
 
