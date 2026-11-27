@@ -36,6 +36,7 @@ from app.handlers.cook import (
 )
 from app.i18n import DEFAULT_LANG, t
 from app.messaging.adapters.legacy import action_entry
+from app.messaging.identity_service import AuthorizationStamp
 from app.models import CookSession, Household
 from app.pending_service import (
     utc_naive,
@@ -429,6 +430,10 @@ async def handle_cook_callback(
             await cb.ack(t("toast.unrecognized_action", user.lang))
             return
         chosen_purpose = PURPOSE_OPTIONS[option_index][0]
+        authorization = AuthorizationStamp(
+            user.id, user.household_id, user.membership_generation
+        )
+        user_tz = user.tz
         result = session.exec(
             update(CookSession)
             .where(
@@ -453,9 +458,6 @@ async def handle_cook_callback(
             return
         await edit_or_resend(cb, t("cook.thinking", user.lang))
         await cb.ack()
-        user_id = user.id
-        household_id = user.household_id
-        user_tz = user.tz
         cook_id = cook.id
 
     if cook_id is None:
@@ -463,8 +465,7 @@ async def handle_cook_callback(
     spawn(
         run_cook_and_render(
             session_factory,
-            user_id=user_id,
-            household_id=household_id,
+            authorization=authorization,
             user_tz=user_tz,
             cook_id=cook_id,
             clients=clients,
