@@ -34,6 +34,7 @@ from app.cook.options import (
 from app.cook.recipe_source import ChainedRecipeSource, LlmRecipeSource
 from app.i18n import t
 from app.messaging.adapters.legacy import message_entry
+from app.messaging.identity_service import AuthorizationStamp, stamped_user
 from app.models import Household, User
 from app.profile_service import profile_from_household
 from app.renderer import (
@@ -203,8 +204,7 @@ async def _safe_edit_bot(
 async def run_cook_and_render(
     session_factory: _SessionFactory,
     *,
-    user_id: int,
-    household_id: int,
+    authorization: AuthorizationStamp,
     user_tz: str,
     cook_id: int,
     clients: PerUserClients,
@@ -213,8 +213,21 @@ async def run_cook_and_render(
     translation_llm=None,
     recipe_sources=(),
 ) -> None:
+    household_id = authorization.household_id
+
+    def is_authorized() -> bool:
+        # Do not reuse a session that may have cached the member or a DB snapshot.
+        with session_factory() as current:
+            return stamped_user(current, authorization) is not None
+
+    async def edit_if_authorized(*, chat_id, message_id, text, keyboard=None) -> None:
+        if is_authorized():
+            await _safe_edit_bot(
+                bot, chat_id=chat_id, message_id=message_id, text=text, keyboard=keyboard
+            )
+
     with session_factory() as session:
-        user = session.get(User, user_id)
+        user = stamped_user(session, authorization)
         if user is None:
             return
         cook = load_cook_session(session, household_id=household_id, cook_id=cook_id)
@@ -223,8 +236,7 @@ async def run_cook_and_render(
         household = session.get(Household, household_id)
         if household is None:
             mark_status(session, cook=cook, status="cancelled")
-            await _safe_edit_bot(
-                bot,
+            await edit_if_authorized(
                 chat_id=cook.chat_id,
                 message_id=cook.message_id,
                 text=t("cook.no_profile_body", user.lang),
@@ -244,8 +256,7 @@ async def run_cook_and_render(
         )
         if not decision.allowed:
             mark_status(session, cook=cook, status="cancelled")
-            await _safe_edit_bot(
-                bot,
+            await edit_if_authorized(
                 chat_id=chat_id,
                 message_id=message_id,
                 text=t("quota.degraded.cook", user.lang),
@@ -273,8 +284,7 @@ async def run_cook_and_render(
             )
         except NotEnoughItems:
             mark_status(session, cook=cook, status="cancelled")
-            await _safe_edit_bot(
-                bot,
+            await edit_if_authorized(
                 chat_id=chat_id,
                 message_id=message_id,
                 text=t("cook.not_enough_items", user.lang),
@@ -286,8 +296,7 @@ async def run_cook_and_render(
                 extra={"error_class": type(exc).__name__, "error": str(exc)},
             )
             mark_status(session, cook=cook, status="cancelled")
-            await _safe_edit_bot(
-                bot,
+            await edit_if_authorized(
                 chat_id=chat_id,
                 message_id=message_id,
                 text=t("cook.build_failed", user.lang),
@@ -302,6 +311,10 @@ async def run_cook_and_render(
                 cost_micros=cook.llm_cost_micros_usd,
                 now=now,
             )
+
+        if not is_authorized():
+            mark_status(session, cook=cook, status="cancelled")
+            return
 
         mark_status(session, cook=cook, status="done")
         view = await views.cook_result(
@@ -324,8 +337,8 @@ async def run_cook_and_render(
             if cards
             else None
         )
-        await _safe_edit_bot(
-            bot, chat_id=chat_id, message_id=message_id, text=text, keyboard=keyboard
+        await edit_if_authorized(
+            chat_id=chat_id, message_id=message_id, text=text, keyboard=keyboard
         )
 
 

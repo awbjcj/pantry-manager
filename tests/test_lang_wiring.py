@@ -24,6 +24,7 @@ from app.cook.models import (
     SelectedItems,
 )
 from app.llm import LLMResult, ParsedItem, ParseResult
+from app.messaging.identity_service import AuthorizationStamp
 from app.models import CookSession, Household, PantryItem, User
 from app.shopping_service import add_missing
 from tests.fakes import (
@@ -471,8 +472,7 @@ async def test_cook_result_renders_zh_title_for_zh_user(session_factory, monkeyp
 
     await run_cook_and_render(
         session_factory,
-        user_id=1,
-        household_id=household_id,
+        authorization=AuthorizationStamp(1, household_id, 0),
         user_tz="America/Detroit",
         cook_id=cook_id,
         clients=PerUserClients.for_tests(
@@ -501,8 +501,7 @@ async def test_cook_result_english_user_unaffected(session_factory, monkeypatch)
 
     await run_cook_and_render(
         session_factory,
-        user_id=1,
-        household_id=household_id,
+        authorization=AuthorizationStamp(1, household_id, 0),
         user_tz="America/Detroit",
         cook_id=cook_id,
         clients=PerUserClients.for_tests(

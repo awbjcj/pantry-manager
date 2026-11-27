@@ -18,6 +18,7 @@ from app.cook.models import (
     ScoredCandidate,
     SelectedItems,
 )
+from app.messaging.identity_service import AuthorizationStamp
 from app.models import (
     CookSession,
     Household,
@@ -215,7 +216,7 @@ def test_result_keyboard_attached_on_render(monkeypatch):
     bot = type("B", (), {"edit_message_text": edit_mock})()
     assert cook_id is not None
     asyncio.run(run_cook_and_render(
-        lambda: Session(engine), user_id=1, household_id=1, user_tz="America/Detroit",
+        lambda: Session(engine), authorization=AuthorizationStamp(1, 1, 0), user_tz="America/Detroit",
         cook_id=cook_id,
         clients=PerUserClients.for_tests(
             selection=FakeSelectionLLM(canned=(SelectedItems(item_ids=[]), 5)),
@@ -257,7 +258,7 @@ def test_no_result_keyboard_when_no_recipe_found(monkeypatch):
     bot = type("B", (), {"edit_message_text": edit_mock})()
     assert cook_id is not None
     asyncio.run(run_cook_and_render(
-        lambda: Session(engine), user_id=1, household_id=1, user_tz="America/Detroit",
+        lambda: Session(engine), authorization=AuthorizationStamp(1, 1, 0), user_tz="America/Detroit",
         cook_id=cook_id,
         clients=PerUserClients.for_tests(
             selection=FakeSelectionLLM(canned=(SelectedItems(item_ids=[]), 5)),

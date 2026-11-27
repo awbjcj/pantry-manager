@@ -2,6 +2,7 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock
 
+import pytest
 from sqlmodel import Session, SQLModel, create_engine
 
 import app.bot as bot_mod
@@ -18,6 +19,7 @@ from app.cook.models import (
     RecipeIngredient,
     SelectedItems,
 )
+from app.messaging.identity_service import AuthorizationStamp
 from app.models import CookSession, Household, PantryItem, User
 from tests.fakes import FakeNutritionLLM, FakeRecipeLLM, FakeSelectionLLM
 
@@ -790,8 +792,7 @@ def test_run_cook_and_render_completes_and_edits(monkeypatch):
     asyncio.run(
         run_cook_and_render(
             lambda: Session(engine),
-            user_id=1,
-            household_id=1,
+            authorization=AuthorizationStamp(1, 1, 0),
             user_tz="America/Detroit",
             cook_id=cook_id,
             clients=PerUserClients.for_tests(
@@ -807,6 +808,81 @@ def test_run_cook_and_render_completes_and_edits(monkeypatch):
         assert cook.status == "done"
         assert "Safe" in (cook.candidates_json or "")
     bot.edit_message_text.assert_awaited()  # type: ignore[attr-defined]
+
+
+@pytest.mark.parametrize(
+    "revocation_stage", ["before_start", "rejoined", "during_cook", "during_render"]
+)
+def test_deferred_cook_rechecks_membership(revocation_stage, monkeypatch):
+    from app.handlers import cook as cook_worker
+    from app.messaging.identity_service import revoke_membership
+    from app.views import LocalizedView
+
+    engine = _engine_with_user()
+    now = _NOW("America/Detroit")
+    with Session(engine) as db:
+        cook = CookSession(
+            household_id=1,
+            chat_id=1,
+            message_id=99,
+            status="ready",
+            created_at=now.replace(tzinfo=None),
+            expires_at=now.replace(tzinfo=None) + timedelta(minutes=10),
+        )
+        db.add(cook)
+        db.commit()
+        cook_id = cook.id
+    assert cook_id is not None
+
+    def revoke():
+        with Session(engine) as db:
+            member = db.get(User, 1)
+            assert member is not None
+            revoke_membership(db, member)
+            db.commit()
+
+    async def finish_cook(*args, **kwargs):
+        if revocation_stage == "during_cook":
+            revoke()
+        return []
+
+    async def render(*args, **kwargs):
+        revoke()
+        return LocalizedView(text="Test result", names={})
+
+    run = AsyncMock(side_effect=finish_cook)
+    render_result = AsyncMock(side_effect=render)
+    monkeypatch.setattr(cook_worker, "run_cook", run)
+    monkeypatch.setattr(cook_worker.views, "cook_result", render_result)
+    edit = AsyncMock()
+    bot = type("Bot", (), {"edit_message_text": edit})()
+    authorization = AuthorizationStamp(1, 1, 0)
+    denied_at_start = revocation_stage in {"before_start", "rejoined"}
+    if denied_at_start:
+        revoke()
+    if revocation_stage == "rejoined":
+        with Session(engine) as db:
+            member = db.get(User, 1)
+            assert member is not None
+            member.membership_active = True
+            db.add(member)
+            db.commit()
+
+    asyncio.run(
+        run_cook_and_render(
+            lambda: Session(engine),
+            authorization=authorization,
+            user_tz="America/Detroit",
+            cook_id=cook_id,
+            now_provider=_NOW,
+            bot=bot,
+            **_fakes(),
+        )
+    )
+
+    assert run.await_count == (0 if denied_at_start else 1)
+    assert render_result.await_count == (1 if revocation_stage == "during_render" else 0)
+    edit.assert_not_awaited()
 
 
 def test_dispatcher_routes_every_v49_cook_prefix_with_static_sources(monkeypatch):
