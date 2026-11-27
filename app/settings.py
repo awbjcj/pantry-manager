@@ -43,14 +43,14 @@ class Settings(BaseSettings):
     )
     openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-6.1-terra", alias="OPENAI_MODEL")
-    openai_text_model: str = Field(default="gpt-6.1-terra", alias="OPENAI_TEXT_MODEL")
+    openai_text_model: str = Field(default="gpt-6-luna", alias="OPENAI_TEXT_MODEL")
     anthropic_search_model: str = Field(
         default="claude-sonnet-5-5", alias="ANTHROPIC_SEARCH_MODEL"
     )
     gemini_api_key: str | None = Field(default=None, alias="GEMINI_API_KEY")
-    gemini_model: str = Field(default="gemini-3.8-flash", alias="GEMINI_MODEL")
+    gemini_model: str = Field(default="gemini-4-hydrogen", alias="GEMINI_MODEL")
     gemini_text_model: str = Field(
-        default="gemini-3.8-flash", alias="GEMINI_TEXT_MODEL"
+        default="gemini-3.5-flash-lite", alias="GEMINI_TEXT_MODEL"
     )
     # DeepSeek uses Responses for text and the standalone Search API for web
     # evidence. This integration delegates receipt photos to another provider.
@@ -104,6 +104,11 @@ class Settings(BaseSettings):
     @classmethod
     def upgrade_claude_model(cls, value: str) -> str:
         return resolve_model_id("anthropic", value)
+
+    @field_validator("gemini_model", "gemini_text_model")
+    @classmethod
+    def upgrade_gemini_model(cls, value: str) -> str:
+        return resolve_model_id("gemini", value)
 
     @model_validator(mode="after")
     def validate_web_app(self) -> "Settings":

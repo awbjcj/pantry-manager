@@ -195,7 +195,7 @@ def test_cost_micros_prices_openai_models():
 
     usage = SimpleNamespace(usage=SimpleNamespace(input_tokens=1000, output_tokens=200))
     assert _cost_micros(usage, "gpt-6.1-terra") == 2000
-    assert _cost_micros(usage, "gpt-6.1-sol") == 4000
+    assert _cost_micros(usage, "gpt-6.2-sol") == 4000
     assert _cost_micros(usage, "claude-opus-5-5") == 8000
     assert _cost_micros(usage, "claude-sonnet-5-5") == 4000
     assert _cost_micros(usage, "claude-haiku-5-5") == 200

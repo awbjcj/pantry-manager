@@ -18,7 +18,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from datetime import date
+from datetime import UTC, date, datetime
 from typing import Any, TypeVar
 
 from pydantic import BaseModel
@@ -30,7 +30,6 @@ from app.cook.llm import (
 )
 from app.cook.models import NutritionScores, RecipeCandidates, SelectedItems
 from app.llm import (
-    _PRICE_MICROS_PER_TOKEN_BY_MODEL,
     CORRECTION_SYSTEM_PROMPT,
     OPENAI_ADD_SYSTEM_PROMPT,
     PROFILE_SYSTEM_PROMPT,
@@ -53,7 +52,7 @@ log = logging.getLogger(__name__)
 
 TModel = TypeVar("TModel", bound=BaseModel)
 
-# Gemini 2.5+/3.x are reasoning models: their "thinking" tokens are counted
+# Gemini 2.5 and newer include reasoning models: their "thinking" tokens are counted
 # against ``max_output_tokens`` alongside the visible reply. A budget sized for
 # the JSON output alone gets eaten by thinking, truncating the reply
 # (``finish_reason=MAX_TOKENS``) so the JSON is cut mid-string and parsing fails
@@ -64,11 +63,33 @@ TModel = TypeVar("TModel", bound=BaseModel)
 _THINKING_HEADROOM_TOKENS = 8192
 
 
-def _gemini_cost(response, model: str) -> int | None:
-    """Best-effort cost in micro-USD from Gemini ``usage_metadata`` token counts."""
-    price = _PRICE_MICROS_PER_TOKEN_BY_MODEL.get(model)
-    if price is None:
+# Standard text/image input and output rates in USD per million tokens.
+_GEMINI_TOKEN_RATES = {
+    "gemini-4-carbon": (4, 20),
+    "gemini-4-argon": (4, 20),
+    "gemini-4-neon": (3, 15),
+    "gemini-4-hydrogen": (1.50, 7.50),
+    "gemini-3.8-flash": (1.50, 7.50),
+    "gemini-3.6-flash": (1.50, 7.50),
+    "gemini-3.5-flash-lite": (0.30, 2.50),
+}
+_GEMINI_PROMOTIONAL_RATES = {
+    "gemini-4-carbon": (date(2026, 12, 1), (2, 10)),
+    "gemini-4-argon": (date(2026, 12, 1), (2, 10)),
+    "gemini-3.8-flash": (date(2027, 1, 1), (0.75, 3.75)),
+    "gemini-3.6-flash": (date(2027, 1, 1), (0.75, 3.75)),
+}
+
+
+def _gemini_cost(response, model: str, *, today: date | None = None) -> int | None:
+    """Best-effort cost in micro-USD from Gemini usage and dated API rates."""
+    rates = _GEMINI_TOKEN_RATES.get(model)
+    if rates is None:
         return None
+    promotion = _GEMINI_PROMOTIONAL_RATES.get(model)
+    if promotion and (today or datetime.now(UTC).date()) < promotion[0]:
+        rates = promotion[1]
+    input_rate, output_rate = rates
     usage = getattr(response, "usage_metadata", None)
     if usage is None:
         return None
@@ -79,16 +100,16 @@ def _gemini_cost(response, model: str) -> int | None:
         out_tokens = (getattr(usage, "candidates_token_count", None) or 0) + (
             getattr(usage, "thoughts_token_count", None) or 0
         )
-        return round(in_tokens * price["input"] + out_tokens * price["output"])
+        return round(in_tokens * input_rate + out_tokens * output_rate)
     except Exception:  # noqa: BLE001 - cost estimate is best-effort
         return None
 
 
 # Google Search grounding is a tool charge on top of token costs (confirmed
-# against the Gemini pricing page on 2026-08-15): Gemini 3.x bills per search
+# against the Gemini pricing page on 2026-08-15): Gemini 3 and 4 bill per search
 # query the model executes; Gemini 2.5 and older bill per grounded prompt
 # regardless of how many queries that prompt issued.
-_GEMINI_SEARCH_COST_MICROS_PER_QUERY_V3 = 14_000
+_GEMINI_SEARCH_COST_MICROS_PER_QUERY = 14_000
 _GEMINI_SEARCH_COST_MICROS_PER_PROMPT_LEGACY = 35_000
 
 
@@ -99,8 +120,8 @@ def _gemini_search_cost_micros(response, model: str) -> int:
     queries = [q for q in (getattr(metadata, "web_search_queries", None) or []) if q]
     if not queries:
         return 0
-    if model.startswith("gemini-3"):
-        return len(queries) * _GEMINI_SEARCH_COST_MICROS_PER_QUERY_V3
+    if model.startswith(("gemini-3", "gemini-4")):
+        return len(queries) * _GEMINI_SEARCH_COST_MICROS_PER_QUERY
     return _GEMINI_SEARCH_COST_MICROS_PER_PROMPT_LEGACY
 
 

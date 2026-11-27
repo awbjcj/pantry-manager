@@ -11,7 +11,11 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.deepseek_pricing import deepseek_token_cost_micros
 from app.llm_transport import with_transport_retry
-from app.model_policy import CURRENT_CLAUDE_MODELS, CURRENT_OPENAI_MODELS
+from app.model_policy import (
+    CLAUDE_AUTO_TOOL_MODELS,
+    CURRENT_CLAUDE_MODELS,
+    CURRENT_OPENAI_MODELS,
+)
 from app.profile_service import FoodProfile
 
 # Re-exported for callers (app.bot, app.translation_llm) that import the error
@@ -223,28 +227,21 @@ _PARSE_RECEIPT_TOOL = {
     "input_schema": ParseResult.model_json_schema(),
 }
 
-_PRICE_MICROS_PER_TOKEN_BY_MODEL = {
-    "claude-sonnet-5-5": {"input": 2, "output": 10},
-    "claude-opus-5-5": {"input": 4, "output": 20},
-    "claude-haiku-5-5": {"input": 0.1, "output": 0.5},
-    "gpt-6.1-terra": {"input": 1, "output": 5},
-    "gpt-6.1-sol": {"input": 2, "output": 10},
-    # Approximate public per-token (micro-USD) rates; cost stays best-effort and
-    # is reported as unknown for any model absent from this table. Some models
-    # (for example Gemini 3.1 Pro Preview) charge more above 200k input tokens;
-    # the bot's receipt and text prompts stay far below that threshold.
-    "gemini-2.5-flash": {"input": 0.3, "output": 2.5},
-    # Introductory Standard-tier pricing through 2026-12-31. Gemini bills
-    # generated thinking tokens at the output rate; _gemini_cost adds the
-    # SDK's separate thoughts_token_count to candidates_token_count.
-    "gemini-3.8-flash": {"input": 0.75, "output": 3.75},
-    "gemini-3.7-flash": {"input": 0.75, "output": 3.75},
-    "gemini-3.6-flash": {"input": 0.75, "output": 3.75},
-    "gemini-3.5-flash": {"input": 1.5, "output": 9.0},
-    "gemini-3.5-flash-lite": {"input": 0.3, "output": 2.5},
-    "gemini-3.1-pro-preview": {"input": 2.0, "output": 12.0},
-    "gemini-3.1-flash-lite": {"input": 0.25, "output": 1.5},
+# Standard API rates in micro-USD per token, numerically equal to USD / 1M tokens.
+# OpenAI prices pair ordinary input, cached input and output. Cache writes
+# are 1.25x (30 minutes) or 2.5x (12 hours) ordinary input.
+_OPENAI_TOKEN_RATES = {
+    "gpt-6.2-astra": (8, 0.40, 40),
+    "gpt-6.2-sol": (2, 0.10, 10),
+    "gpt-6.1-terra": (1, 0.05, 5),
+    "gpt-6-luna": (0.10, 0.01, 0.50),
 }
+_CLAUDE_TOKEN_RATES = {
+    "claude-fable-5-2": (8, 40),
+    "claude-opus-5-5": (4, 20),
+    "claude-sonnet-5-5": (2, 10),
+}
+
 
 _OPENAI_WEB_SEARCH_TOOL = {
     "type": "web_search",
@@ -274,32 +271,25 @@ def _extract_tool_input(message) -> dict:
 def _cost_micros(message, model: str) -> int | None:
     if model.startswith("deepseek-"):
         return deepseek_token_cost_micros(message, model)
-    price = _PRICE_MICROS_PER_TOKEN_BY_MODEL.get(model)
-    if price is None:
-        return None
     usage = getattr(message, "usage", None)
     if usage is None:
         return None
     try:
         if model == "claude-haiku-5-5":
             return _haiku_5_5_cost_micros(usage)
-        if model in CURRENT_OPENAI_MODELS:
-            return _gpt_61_cost_micros(usage, model)
-        # round the total to whole micro-USD; per-token rates may be fractional
-        # (e.g. OpenAI), while the integer Anthropic rates are unaffected.
-        return round(
-            usage.input_tokens * price["input"] + usage.output_tokens * price["output"]
-        )
+        if model in _OPENAI_TOKEN_RATES:
+            return _openai_token_cost_micros(usage, model)
+        if model in _CLAUDE_TOKEN_RATES:
+            input_rate, output_rate = _CLAUDE_TOKEN_RATES[model]
+            return round(usage.input_tokens * input_rate + usage.output_tokens * output_rate)
     except Exception:  # noqa: BLE001 - cost estimate is best-effort
         return None
+    return None
 
 
-def _gpt_61_cost_micros(usage, model: str) -> int:
-    """Standard Responses rates checked 2026-10-28; integer hundredths of micro-USD.
-
-    https://developers.openai.com/api/docs/pricing
-    Missing cache details use ordinary-input estimates, as for other models.
-    """
+def _openai_token_cost_micros(usage, model: str) -> int:
+    """Estimate Standard Responses prices with long-context and cache charges."""
+    input_rate, cached_rate, output_rate = _OPENAI_TOKEN_RATES[model]
     input_tokens = usage.input_tokens
     details = getattr(usage, "input_tokens_details", None)
     cache_read = getattr(details, "cached_tokens", None) or 0
@@ -325,14 +315,13 @@ def _gpt_61_cost_micros(usage, model: str) -> int:
         raise ValueError("inconsistent token usage")
     long_context = input_tokens > 272_000
     input_cost = (
-        ordinary_input * 100 + cache_read * 5
-        + cache_write_30m * 125 + cache_write_12h * 250
+        ordinary_input * input_rate
+        + cache_read * cached_rate
+        + (cache_write_30m * 1.25 + cache_write_12h * 2.5) * input_rate
     ) * (2 if long_context else 1)
-    # output_tokens already includes reasoning; do not add it again.
-    output_cost = usage.output_tokens * (750 if long_context else 500)
-    # Sol's input, cache and output prices are exactly twice Terra's.
-    model_multiplier = 2 if model == "gpt-6.1-sol" else 1
-    return round((input_cost + output_cost) * model_multiplier / 100)
+    # output_tokens already includes reasoning.
+    output_cost = usage.output_tokens * output_rate * (1.5 if long_context else 1)
+    return round(input_cost + output_cost)
 
 
 def _haiku_5_5_cost_micros(usage) -> int:
@@ -544,7 +533,7 @@ class AnthropicLLMClient(LLMClient):
         self._sleep = sleep
 
     async def _create_message(self, user_content):
-        auto_tool_choice = self._model in {"claude-opus-5-5", "claude-sonnet-5-5"}
+        auto_tool_choice = self._model in CLAUDE_AUTO_TOOL_MODELS
         return await with_transport_retry(
             lambda: self._sdk.messages.create(
                 model=self._model,
@@ -555,7 +544,7 @@ class AnthropicLLMClient(LLMClient):
                     else SYSTEM_PROMPT
                 ),
                 tools=[_PARSE_RECEIPT_TOOL],
-                # Opus/Sonnet 5.5 reject forced tool choice.
+                # Fable 5.2 and Opus/Sonnet 5.5 reject forced tool choice.
                 tool_choice=(
                     {"type": "auto"}
                     if auto_tool_choice
@@ -593,7 +582,7 @@ class AnthropicLLMClient(LLMClient):
             attempt_cost = _cost_micros(message, self._model)
             cost = None if cost is None or attempt_cost is None else cost + attempt_cost
             try:
-                if self._model in {"claude-opus-5-5", "claude-sonnet-5-5"} and not any(
+                if self._model in CLAUDE_AUTO_TOOL_MODELS and not any(
                     getattr(block, "type", None) == "tool_use" for block in message.content
                 ):
                     # Auto tool choice can return JSON text instead of a tool call.
