@@ -9,7 +9,7 @@ from anthropic import AsyncAnthropic
 from app.llm import AnthropicLLMClient
 
 
-@pytest.mark.parametrize("model", ["claude-opus-5-5", "claude-sonnet-5-5"])
+@pytest.mark.parametrize("model", ["claude-fable-5-2", "claude-opus-5-5", "claude-sonnet-5-5"])
 @pytest.mark.parametrize("tool_call", [False, True])
 async def test_receipt_accepts_auto_tool_or_json_response(model, tool_call):
     requests = []
@@ -36,7 +36,9 @@ async def test_receipt_accepts_auto_tool_or_json_response(model, tool_call):
         result = await AnthropicLLMClient(sdk, model).extract_items_from_image(b"receipt")
 
     assert result.parse.items == []
-    assert result.cost_micros_usd == (2000 if model == "claude-opus-5-5" else 1000)
+    assert result.cost_micros_usd == {
+        "claude-fable-5-2": 4000, "claude-opus-5-5": 2000, "claude-sonnet-5-5": 1000,
+    }[model]
     assert len(requests) == 1
     payload = json.loads(requests[0].content)
     assert payload["model"] == model

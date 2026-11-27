@@ -1,4 +1,4 @@
-"""Terra Standard pricing and installed-SDK requests against a local HTTP mock."""
+"""OpenAI Standard pricing and installed-SDK requests against a local HTTP mock."""
 
 import json
 from types import SimpleNamespace
@@ -12,8 +12,16 @@ from app.llm import OpenAILLMClient, ParseResult, _cost_micros
 
 
 @pytest.mark.parametrize("cook", [False, True])
-@pytest.mark.parametrize("model", ["gpt-6.1-terra", "gpt-6.1-sol"])
-async def test_gpt_61_responses_payload_and_structured_output(cook, model):
+@pytest.mark.parametrize(
+    "model,expected_cost",
+    [
+        ("gpt-6.1-terra", 2035),
+        ("gpt-6.2-sol", 4070),
+        ("gpt-6.2-astra", 16_280),
+        ("gpt-6-luna", 204),
+    ],
+)
+async def test_gpt_responses_payload_and_structured_output(cook, model, expected_cost):
     requests = []
 
     def handle(request):
@@ -58,7 +66,7 @@ async def test_gpt_61_responses_payload_and_structured_output(cook, model):
             parsed, cost = result.parse, result.cost_micros_usd
 
     assert parsed.items == []
-    assert cost == (4070 if model == "gpt-6.1-sol" else 2035)
+    assert cost == expected_cost
     assert len(requests) == 1
     assert requests[0].url.path == "/v1/responses"
     body = json.loads(requests[0].content)
@@ -85,8 +93,8 @@ async def test_gpt_61_responses_payload_and_structured_output(cook, model):
         (272_001, 200, 300, 100, 545_572),
     ],
 )
-@pytest.mark.parametrize("model", ["gpt-6.1-terra", "gpt-6.1-sol"])
-def test_gpt_61_prices_disjoint_cache_buckets_and_full_request_tier(
+@pytest.mark.parametrize("model", ["gpt-6.1-terra", "gpt-6.2-sol"])
+def test_gpt_prices_disjoint_cache_buckets_and_full_request_tier(
     input_tokens, cache_read, write_30m, write_12h, expected, model,
 ):
     usage = SimpleNamespace(
@@ -100,7 +108,7 @@ def test_gpt_61_prices_disjoint_cache_buckets_and_full_request_tier(
         output_tokens_details=SimpleNamespace(reasoning_tokens=100),
     )
     assert _cost_micros(SimpleNamespace(usage=usage), model) == (
-        expected * (2 if model == "gpt-6.1-sol" else 1)
+        expected * (2 if model == "gpt-6.2-sol" else 1)
     )
 
 

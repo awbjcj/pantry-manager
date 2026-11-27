@@ -170,8 +170,9 @@ class AnthropicSearchClient(ShelfLifeSearchClient):
 
     async def lookup_shelf_life(self, *, name: str, category: str | None) -> ShelfLifeSearchResult:
         from app.llm import (  # local import avoids cycle
-            _PRICE_MICROS_PER_TOKEN_BY_MODEL,
+            _add_cost,
             _anthropic_search_cost_micros,
+            _cost_micros,
             _reasoning_max_tokens,
         )
         prompt = f"Item: {name}" + (f" (category: {category})" if category else "")
@@ -188,14 +189,9 @@ class AnthropicSearchClient(ShelfLifeSearchClient):
             log.warning("search_transport_failed", extra={"error_class": type(exc).__name__})
             return ShelfLifeSearchResult(days=None, confidence=0.0, cost_micros_usd=None)
 
-        price = _PRICE_MICROS_PER_TOKEN_BY_MODEL.get(self._model)
-        cost = None
-        usage = getattr(msg, "usage", None)
-        if price is not None and usage is not None:
-            cost = (
-                usage.input_tokens * price["input"] + usage.output_tokens * price["output"]
-                + _anthropic_search_cost_micros(msg)
-            )
+        cost = _add_cost(
+            _cost_micros(msg, self._model), _anthropic_search_cost_micros(msg)
+        )
 
         text = "".join(
             b.text for b in msg.content if getattr(b, "type", None) == "text"

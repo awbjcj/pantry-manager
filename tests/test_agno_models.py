@@ -95,7 +95,7 @@ def test_claude_structured_output_kwargs_are_accepted_by_installed_anthropic_sdk
     [
         ("anthropic", "claude-sonnet-5-5"),
         ("openai", "gpt-6.1-terra"),
-        ("gemini", "gemini-3-flash-preview"),
+        ("gemini", "gemini-4-hydrogen"),
         ("deepseek", "deepseek-chat"),
     ],
 )
